@@ -2,13 +2,15 @@
 Service d'authentification.
 Isolé des routes — ne connaît pas FastAPI Request/Response.
 """
-import logging
-from sqlalchemy.ext.asyncio import AsyncSession
-from sqlalchemy import select
 
-from app.models.user import User
-from app.core.auth import hash_password, verify_password, create_access_token
+import logging
+
+from sqlalchemy import select
+from sqlalchemy.ext.asyncio import AsyncSession
+
+from app.core.auth import create_access_token, hash_password, verify_password
 from app.core.exceptions import AppError
+from app.models.user import User
 
 logger = logging.getLogger("theremia.auth")
 

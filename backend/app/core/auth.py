@@ -2,15 +2,15 @@
 Utilitaires JWT et dépendance FastAPI get_current_user.
 Importé par toutes les routes protégées.
 """
-from datetime import datetime, timedelta, timezone
-from typing import Optional
+
+from datetime import UTC, datetime, timedelta
 
 from fastapi import Depends, HTTPException, status
 from fastapi.security import OAuth2PasswordBearer
 from jose import JWTError, jwt
 from passlib.context import CryptContext
-from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy import select
+from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.core.config import settings
 from app.core.database import get_db
@@ -32,15 +32,14 @@ def verify_password(plain: str, hashed: str) -> bool:
 
 # ── JWT ───────────────────────────────────────────────────────────────────────
 
+
 def create_access_token(user_id: str) -> str:
-    expire = datetime.now(timezone.utc) + timedelta(
-        minutes=settings.JWT_ACCESS_TOKEN_EXPIRE_MINUTES
-    )
+    expire = datetime.now(UTC) + timedelta(minutes=settings.JWT_ACCESS_TOKEN_EXPIRE_MINUTES)
     payload = {"sub": user_id, "exp": expire}
     return jwt.encode(payload, settings.JWT_SECRET_KEY, algorithm=settings.JWT_ALGORITHM)
 
 
-def decode_token(token: str) -> Optional[str]:
+def decode_token(token: str) -> str | None:
     """Retourne le user_id ou None si token invalide."""
     try:
         payload = jwt.decode(
@@ -54,6 +53,7 @@ def decode_token(token: str) -> Optional[str]:
 
 
 # ── FastAPI dependency ────────────────────────────────────────────────────────
+
 
 async def get_current_user(
     token: str = Depends(oauth2_scheme),

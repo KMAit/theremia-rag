@@ -1,20 +1,21 @@
+import logging
 import os
 import re
 import uuid
-import logging
-import aiofiles
-from fastapi import APIRouter, UploadFile, File, Depends, BackgroundTasks
-from sqlalchemy.ext.asyncio import AsyncSession
-from sqlalchemy import select
 
+import aiofiles
+from fastapi import APIRouter, BackgroundTasks, Depends, File, UploadFile
+from sqlalchemy import select
+from sqlalchemy.ext.asyncio import AsyncSession
+
+from app.core.auth import get_current_user
 from app.core.config import settings
 from app.core.database import get_db
-from app.core.auth import get_current_user
 from app.core.exceptions import NotFoundError, ValidationError
 from app.models.document import Document
-from app.models.user import User
 from app.models.schemas import DocumentResponse
-from app.services.rag_service import ingest_document, delete_document_vectors
+from app.models.user import User
+from app.services.rag_service import delete_document_vectors, ingest_document
 
 router = APIRouter()
 logger = logging.getLogger("theremia.documents")
@@ -39,6 +40,7 @@ def sanitize_filename(name: str) -> str:
 
 async def process_document(doc_id: str, file_path: str):
     from app.core.database import AsyncSessionLocal
+
     logger.info(f"Starting ingestion for document {doc_id}")
     async with AsyncSessionLocal() as db:
         result = await db.execute(select(Document).where(Document.id == doc_id))
