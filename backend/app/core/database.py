@@ -12,9 +12,13 @@ class Base(DeclarativeBase):
 
 
 async def init_db():
-    from app.models import document, conversation  # noqa - import models to register them
-    async with engine.begin() as conn:
-        await conn.run_sync(Base.metadata.create_all)
+    """
+    Ne crée plus les tables directement.
+    Le schéma est géré par Alembic (alembic upgrade head).
+    Cette fonction reste pour d'éventuelles initialisations futures.
+    """
+    # Importer les modèles pour que SQLAlchemy les connaisse (utile pour les tests)
+    from app.models import document, conversation, user  # noqa
 
 
 async def get_db():

@@ -1,4 +1,4 @@
-from sqlalchemy import Column, String, Integer, Float, DateTime, Text, Boolean
+from sqlalchemy import Column, String, Integer, DateTime, Text, ForeignKey
 from sqlalchemy.sql import func
 from app.core.database import Base
 import uuid
@@ -8,6 +8,7 @@ class Document(Base):
     __tablename__ = "documents"
 
     id = Column(String, primary_key=True, default=lambda: str(uuid.uuid4()))
+    user_id = Column(String, ForeignKey("users.id", ondelete="CASCADE"), nullable=False, index=True)
     filename = Column(String, nullable=False)
     original_name = Column(String, nullable=False)
     size_bytes = Column(Integer, nullable=False)

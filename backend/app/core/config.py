@@ -7,6 +7,9 @@ class Settings(BaseSettings):
     APP_NAME: str = "Theremia RAG"
     DEBUG: bool = False
 
+    # Proxy / networking
+    TRUST_PROXY_HEADERS: bool = False
+
     # CORS
     ALLOWED_ORIGINS: List[str] = ["http://localhost:5173", "http://localhost:3000"]
 
@@ -29,6 +32,11 @@ class Settings(BaseSettings):
     CHUNK_SIZE: int = 1000
     CHUNK_OVERLAP: int = 200
     RETRIEVAL_K: int = 5
+
+    # JWT
+    JWT_SECRET_KEY: str = "change_this_to_a_random_64_char_string_in_production"
+    JWT_ALGORITHM: str = "HS256"
+    JWT_ACCESS_TOKEN_EXPIRE_MINUTES: int = 60
 
     class Config:
         env_file = ".env"
