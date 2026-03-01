@@ -10,6 +10,7 @@ import logging
 import time
 from collections import defaultdict
 from collections.abc import Callable
+from typing import ClassVar
 
 from fastapi import FastAPI, Request, Response
 from fastapi.responses import JSONResponse

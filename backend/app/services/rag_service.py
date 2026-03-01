@@ -3,6 +3,8 @@ RAG Service — wraps LangChain + ChromaDB.
 Treats AI pipeline as a black box; focus on clean integration.
 """
 
+import logging
+
 from langchain.schema import HumanMessage
 from langchain.text_splitter import RecursiveCharacterTextSplitter
 from langchain_community.document_loaders import PyMuPDFLoader
@@ -10,6 +12,8 @@ from langchain_community.vectorstores import Chroma
 from langchain_openai import ChatOpenAI, OpenAIEmbeddings
 
 from app.core.config import settings
+
+logger = logging.getLogger("theremia.rag")
 
 # ── Cost table (USD per 1k tokens) ──────────────────────────────────────────
 MODEL_COSTS = {
