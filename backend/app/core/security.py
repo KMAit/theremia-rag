@@ -5,10 +5,12 @@ Security middleware:
 
 Note: In production, replace in-memory limiter with Redis for multi-instance.
 """
-import time
+
 import logging
+import time
 from collections import defaultdict
-from typing import Callable
+from collections.abc import Callable
+from typing import ClassVar
 
 from fastapi import FastAPI, Request, Response
 from fastapi.responses import JSONResponse
@@ -77,7 +79,8 @@ class RateLimitMiddleware(BaseHTTPMiddleware):
     - POST /documents (upload): 10 req / minute
     - Global: 120 req / minute
     """
-    RULES = [
+
+    RULES: ClassVar[list] = [
         ("/api/v1/conversations", "POST", "messages", 20, 60),  # only when path endswith /messages
         ("/api/v1/documents", "POST", "upload", 10, 60),
         ("/api/v1", "*", "global", 120, 60),

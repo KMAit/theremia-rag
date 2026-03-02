@@ -1,15 +1,16 @@
 import logging
-from fastapi import APIRouter, Depends
-from sqlalchemy.ext.asyncio import AsyncSession
-from sqlalchemy import select
 
-from app.core.database import get_db
+from fastapi import APIRouter, Depends
+from sqlalchemy import select
+from sqlalchemy.ext.asyncio import AsyncSession
+
 from app.core.auth import get_current_user
+from app.core.database import get_db
 from app.core.exceptions import NotFoundError, RAGError
 from app.models.conversation import Conversation, Message
 from app.models.document import Document
-from app.models.user import User
 from app.models.schemas import AskRequest, MessageResponse
+from app.models.user import User
 from app.services.rag_service import query_documents
 
 router = APIRouter()
@@ -42,9 +43,7 @@ async def get_messages(
     await _get_owned_conversation(convo_id, current_user, db)
 
     result = await db.execute(
-        select(Message)
-        .where(Message.conversation_id == convo_id)
-        .order_by(Message.created_at)
+        select(Message).where(Message.conversation_id == convo_id).order_by(Message.created_at)
     )
     return result.scalars().all()
 
@@ -73,14 +72,9 @@ async def ask_question(
         collection_names = [d.collection_name for d in docs if d.collection_name]
 
     history_result = await db.execute(
-        select(Message)
-        .where(Message.conversation_id == convo_id)
-        .order_by(Message.created_at)
+        select(Message).where(Message.conversation_id == convo_id).order_by(Message.created_at)
     )
-    history = [
-        {"role": m.role, "content": m.content}
-        for m in history_result.scalars().all()
-    ]
+    history = [{"role": m.role, "content": m.content} for m in history_result.scalars().all()]
 
     model = payload.model or convo.model
     logger.info(
@@ -98,7 +92,7 @@ async def ask_question(
         )
     except Exception as e:
         logger.error(f"RAG failed — convo={convo_id}: {e}", exc_info=True)
-        raise RAGError(f"Failed to generate answer: {str(e)}")
+        raise RAGError(f"Failed to generate answer: {e!s}") from e
 
     user_msg = Message(
         conversation_id=convo_id,

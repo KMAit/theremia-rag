@@ -1,11 +1,13 @@
 import logging
 import sys
+
 from fastapi import FastAPI, Request, status
-from fastapi.responses import JSONResponse
 from fastapi.exceptions import RequestValidationError
+from fastapi.responses import JSONResponse
 from sqlalchemy.exc import SQLAlchemyError
 
 # ── Logging setup ────────────────────────────────────────────────────────────
+
 
 def setup_logging():
     fmt = "%(asctime)s | %(levelname)-8s | %(name)s | %(message)s"
@@ -25,21 +27,26 @@ logger = logging.getLogger("theremia")
 
 # ── Custom exceptions ─────────────────────────────────────────────────────────
 
+
 class AppError(Exception):
     """Base application error."""
+
     def __init__(self, message: str, status_code: int = 400, detail: str | None = None):
         self.message = message
         self.status_code = status_code
         self.detail = detail or message
         super().__init__(message)
 
+
 class NotFoundError(AppError):
     def __init__(self, resource: str = "Resource"):
         super().__init__(f"{resource} not found", status_code=404)
 
+
 class ValidationError(AppError):
     def __init__(self, message: str):
         super().__init__(message, status_code=422)
+
 
 class RAGError(AppError):
     def __init__(self, message: str):
@@ -48,8 +55,8 @@ class RAGError(AppError):
 
 # ── Exception handlers ────────────────────────────────────────────────────────
 
-def register_exception_handlers(app: FastAPI):
 
+def register_exception_handlers(app: FastAPI):
     @app.exception_handler(AppError)
     async def app_error_handler(request: Request, exc: AppError):
         logger.warning(f"{request.method} {request.url.path} → {exc.status_code}: {exc.message}")
@@ -61,7 +68,7 @@ def register_exception_handlers(app: FastAPI):
     @app.exception_handler(RequestValidationError)
     async def validation_error_handler(request: Request, exc: RequestValidationError):
         errors = exc.errors()
-        messages = [f"{' → '.join(str(l) for l in e['loc'])}: {e['msg']}" for e in errors]
+        messages = [f"{' → '.join(str(loc) for loc in e['loc'])}: {e['msg']}" for e in errors]
         logger.warning(f"Validation error on {request.url.path}: {messages}")
         return JSONResponse(
             status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,

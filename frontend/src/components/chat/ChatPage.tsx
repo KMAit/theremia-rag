@@ -1,6 +1,6 @@
 import { useState, useRef, useEffect } from 'react'
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
-import { Send, Plus, Settings2, FileText, Zap, DollarSign, ChevronDown, ChevronUp, ExternalLink } from 'lucide-react'
+import { Send, Plus, Settings2, FileText, Zap, DollarSign, ChevronDown, ChevronUp } from 'lucide-react'
 import ReactMarkdown from 'react-markdown'
 import remarkGfm from 'remark-gfm'
 import { conversationsApi, messagesApi, documentsApi } from '@/lib/api'
@@ -40,7 +40,8 @@ export function ChatPage() {
   })
 
   const updateMutation = useMutation({
-    mutationFn: (payload: any) => conversationsApi.update(activeConversationId!, payload),
+    mutationFn: (payload: Partial<{ model: string; document_ids: string[] }>) =>
+        conversationsApi.update(activeConversationId!, payload),
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: ['conversation', activeConversationId] })
       qc.invalidateQueries({ queryKey: ['conversations'] })
@@ -75,8 +76,9 @@ export function ChatPage() {
       qc.invalidateQueries({ queryKey: ['messages', activeConversationId] })
       qc.invalidateQueries({ queryKey: ['conversation', activeConversationId] })
       qc.invalidateQueries({ queryKey: ['conversations'] })
-    } catch (err: any) {
-      alert(err.message)
+    } catch (err) {
+      const msg = err instanceof Error ? err.message : 'Unknown error'
+      alert(msg)
     } finally {
       setIsAsking(false)
     }

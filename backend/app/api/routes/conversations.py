@@ -1,14 +1,15 @@
 import logging
-from fastapi import APIRouter, Depends
-from sqlalchemy.ext.asyncio import AsyncSession
-from sqlalchemy import select, func
 
-from app.core.database import get_db
+from fastapi import APIRouter, Depends
+from sqlalchemy import func, select
+from sqlalchemy.ext.asyncio import AsyncSession
+
 from app.core.auth import get_current_user
+from app.core.database import get_db
 from app.core.exceptions import NotFoundError
 from app.models.conversation import Conversation, Message
+from app.models.schemas import ConversationCreate, ConversationResponse, ConversationUpdate
 from app.models.user import User
-from app.models.schemas import ConversationCreate, ConversationUpdate, ConversationResponse
 from app.services.rag_service import AVAILABLE_MODELS
 
 router = APIRouter()
@@ -75,10 +76,7 @@ async def list_conversations(
         .order_by(Conversation.updated_at.desc())
     )
     convos = result.scalars().all()
-    return [
-        {**c.__dict__, "message_count": await _message_count(c.id, db)}
-        for c in convos
-    ]
+    return [{**c.__dict__, "message_count": await _message_count(c.id, db)} for c in convos]
 
 
 @router.get("/{convo_id}", response_model=ConversationResponse)

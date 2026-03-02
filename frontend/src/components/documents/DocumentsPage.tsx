@@ -30,8 +30,9 @@ export function DocumentsPage() {
       try {
         await documentsApi.upload(file, (p) => setUploading({ name: file.name, progress: p }))
         qc.invalidateQueries({ queryKey: ['documents'] })
-      } catch (err: any) {
-        alert(err.message)
+      } catch (err) {
+        const msg = err instanceof Error ? err.message : 'Upload failed'
+        alert(msg)
       } finally {
         setUploading(null)
       }

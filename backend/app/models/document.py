@@ -1,7 +1,9 @@
-from sqlalchemy import Column, String, Integer, DateTime, Text, ForeignKey
-from sqlalchemy.sql import func
-from app.core.database import Base
 import uuid
+
+from sqlalchemy import Column, DateTime, ForeignKey, Integer, String, Text
+from sqlalchemy.sql import func
+
+from app.core.database import Base
 
 
 class Document(Base):

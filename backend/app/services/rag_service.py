@@ -2,34 +2,60 @@
 RAG Service — wraps LangChain + ChromaDB.
 Treats AI pipeline as a black box; focus on clean integration.
 """
-import os
-import uuid
-from pathlib import Path
-from typing import Optional
 
-from langchain_community.document_loaders import PyMuPDFLoader
+import logging
+
+from langchain.schema import HumanMessage
 from langchain.text_splitter import RecursiveCharacterTextSplitter
-from langchain_openai import OpenAIEmbeddings, ChatOpenAI
+from langchain_community.document_loaders import PyMuPDFLoader
 from langchain_community.vectorstores import Chroma
-from langchain.chains import ConversationalRetrievalChain
-from langchain.schema import HumanMessage, AIMessage
+from langchain_openai import ChatOpenAI, OpenAIEmbeddings
 
 from app.core.config import settings
 
+logger = logging.getLogger("theremia.rag")
 
 # ── Cost table (USD per 1k tokens) ──────────────────────────────────────────
 MODEL_COSTS = {
-    "gpt-4o":       {"input": 0.005,  "output": 0.015},
-    "gpt-4o-mini":  {"input": 0.00015,"output": 0.0006},
-    "gpt-4-turbo":  {"input": 0.01,   "output": 0.03},
-    "gpt-3.5-turbo":{"input": 0.0005, "output": 0.0015},
+    "gpt-4o": {"input": 0.005, "output": 0.015},
+    "gpt-4o-mini": {"input": 0.00015, "output": 0.0006},
+    "gpt-4-turbo": {"input": 0.01, "output": 0.03},
+    "gpt-3.5-turbo": {"input": 0.0005, "output": 0.0015},
 }
 
 AVAILABLE_MODELS = [
-    {"id": "gpt-4o-mini",   "name": "GPT-4o Mini",   "provider": "OpenAI", "input_cost_per_1k": 0.00015, "output_cost_per_1k": 0.0006,  "context_window": 128000},
-    {"id": "gpt-4o",        "name": "GPT-4o",         "provider": "OpenAI", "input_cost_per_1k": 0.005,   "output_cost_per_1k": 0.015,   "context_window": 128000},
-    {"id": "gpt-4-turbo",   "name": "GPT-4 Turbo",    "provider": "OpenAI", "input_cost_per_1k": 0.01,    "output_cost_per_1k": 0.03,    "context_window": 128000},
-    {"id": "gpt-3.5-turbo", "name": "GPT-3.5 Turbo",  "provider": "OpenAI", "input_cost_per_1k": 0.0005,  "output_cost_per_1k": 0.0015,  "context_window": 16385},
+    {
+        "id": "gpt-4o-mini",
+        "name": "GPT-4o Mini",
+        "provider": "OpenAI",
+        "input_cost_per_1k": 0.00015,
+        "output_cost_per_1k": 0.0006,
+        "context_window": 128000,
+    },
+    {
+        "id": "gpt-4o",
+        "name": "GPT-4o",
+        "provider": "OpenAI",
+        "input_cost_per_1k": 0.005,
+        "output_cost_per_1k": 0.015,
+        "context_window": 128000,
+    },
+    {
+        "id": "gpt-4-turbo",
+        "name": "GPT-4 Turbo",
+        "provider": "OpenAI",
+        "input_cost_per_1k": 0.01,
+        "output_cost_per_1k": 0.03,
+        "context_window": 128000,
+    },
+    {
+        "id": "gpt-3.5-turbo",
+        "name": "GPT-3.5 Turbo",
+        "provider": "OpenAI",
+        "input_cost_per_1k": 0.0005,
+        "output_cost_per_1k": 0.0015,
+        "context_window": 16385,
+    },
 ]
 
 
@@ -87,10 +113,11 @@ async def delete_document_vectors(collection_name: str):
     """Delete a Chroma collection entirely."""
     try:
         import chromadb
+
         client = chromadb.PersistentClient(path=settings.CHROMA_PERSIST_DIR)
         client.delete_collection(collection_name)
     except Exception:
-        pass  # silently skip if collection doesn't exist
+        logger.debug("Collection %s not found, skipping delete", collection_name)
 
 
 async def query_documents(
@@ -98,7 +125,7 @@ async def query_documents(
     document_ids: list[str],
     collection_names: list[str],
     chat_history: list[dict],
-    model: str = None,
+    model: str | None = None,
 ) -> dict:
     """
     Retrieve relevant chunks across collections and generate answer.
@@ -121,12 +148,13 @@ async def query_documents(
             vs = get_or_create_vectorstore(cname)
             results = vs.similarity_search_with_score(question, k=settings.RETRIEVAL_K)
             all_docs_with_scores.extend(results)
-        except Exception:
+        except Exception as e:
+            logger.warning("Failed to query collection: %s", e)
             continue
 
     # Sort by score (lower = better for L2) and take top K
     all_docs_with_scores.sort(key=lambda x: x[1])
-    top_docs = all_docs_with_scores[:settings.RETRIEVAL_K]
+    top_docs = all_docs_with_scores[: settings.RETRIEVAL_K]
 
     # Build context
     context_parts = [doc.page_content for doc, _ in top_docs]
@@ -155,9 +183,7 @@ Previous conversation:
         temperature=0,
     )
 
-    response = llm.invoke([
-        HumanMessage(content=f"{system_prompt}\n\nUser question: {question}")
-    ])
+    response = llm.invoke([HumanMessage(content=f"{system_prompt}\n\nUser question: {question}")])
 
     answer = response.content
     usage = response.response_metadata.get("token_usage", {})
@@ -170,13 +196,15 @@ Previous conversation:
     sources = []
     for doc, score in top_docs:
         meta = doc.metadata
-        sources.append({
-            "doc_id": meta.get("doc_id", ""),
-            "doc_name": meta.get("source", "Unknown").split("/")[-1],
-            "chunk": doc.page_content[:400],
-            "score": round(float(score), 4),
-            "page": meta.get("page", None),
-        })
+        sources.append(
+            {
+                "doc_id": meta.get("doc_id", ""),
+                "doc_name": meta.get("source", "Unknown").split("/")[-1],
+                "chunk": doc.page_content[:400],
+                "score": round(float(score), 4),
+                "page": meta.get("page", None),
+            }
+        )
 
     return {
         "answer": answer,

@@ -1,7 +1,9 @@
-from sqlalchemy import Column, String, DateTime, Boolean
-from sqlalchemy.sql import func
-from app.core.database import Base
 import uuid
+
+from sqlalchemy import Boolean, Column, DateTime, String
+from sqlalchemy.sql import func
+
+from app.core.database import Base
 
 
 class User(Base):

@@ -1,18 +1,20 @@
 import re
+
 from fastapi import APIRouter, Depends
 from fastapi.security import OAuth2PasswordRequestForm
 from pydantic import BaseModel, field_validator
 from sqlalchemy.ext.asyncio import AsyncSession
 
+from app.core.auth import create_access_token, get_current_user
 from app.core.database import get_db
-from app.core.auth import get_current_user, create_access_token
 from app.models.user import User
-from app.services.auth_service import register_user, login_user
+from app.services.auth_service import login_user, register_user
 
 router = APIRouter()
 
 
 # ── Schemas ───────────────────────────────────────────────────────────────────
+
 
 class RegisterRequest(BaseModel):
     email: str
@@ -62,6 +64,7 @@ class TokenResponse(BaseModel):
 
 
 # ── Routes ─────────────────────────────────────────────────────────────────────
+
 
 @router.post("/register", response_model=TokenResponse, status_code=201)
 async def register(

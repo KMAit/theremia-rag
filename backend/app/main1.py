@@ -3,11 +3,11 @@ from contextlib import asynccontextmanager
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
+from app.api.routes import auth, conversations, documents, health, messages
 from app.core.config import settings
 from app.core.database import init_db
-from app.core.exceptions import setup_logging, register_exception_handlers
+from app.core.exceptions import register_exception_handlers, setup_logging
 from app.core.security import register_security_middleware
-from app.api.routes import documents, conversations, messages, health, auth
 
 setup_logging()
 

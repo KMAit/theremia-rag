@@ -1,28 +1,30 @@
-from pydantic import BaseModel, Field, field_validator
-from typing import Optional, List
-from datetime import datetime
 import re
+from datetime import datetime
 
+from pydantic import BaseModel, Field, field_validator
 
 # ── Documents ──────────────────────────────────────────────────────────────
+
 
 class DocumentBase(BaseModel):
     filename: str
     original_name: str
     size_bytes: int
 
+
 class DocumentCreate(DocumentBase):
     pass
+
 
 class DocumentResponse(BaseModel):
     id: str
     filename: str
     original_name: str
     size_bytes: int
-    page_count: Optional[int]
-    chunk_count: Optional[int]
+    page_count: int | None
+    chunk_count: int | None
     status: str
-    error_message: Optional[str]
+    error_message: str | None
     created_at: datetime
 
     class Config:
@@ -31,23 +33,24 @@ class DocumentResponse(BaseModel):
 
 # ── Conversations ──────────────────────────────────────────────────────────
 
+
 class ConversationCreate(BaseModel):
-    title: Optional[str] = "New conversation"
-    model: Optional[str] = "gpt-4o-mini"
-    document_ids: Optional[List[str]] = []
+    title: str | None = "New conversation"
+    model: str | None = "gpt-4o-mini"
+    document_ids: list[str] | None = []
 
     @field_validator("title")
     @classmethod
-    def sanitize_title(cls, v: Optional[str]) -> Optional[str]:
+    def sanitize_title(cls, v: str | None) -> str | None:
         if v is None:
             return "New conversation"
         v = v.strip()
-        v = re.sub(r"[\x00-\x1f\x7f]", "", v)   # retire les caractères de contrôle
+        v = re.sub(r"[\x00-\x1f\x7f]", "", v)  # retire les caractères de contrôle
         return v[:200] or "New conversation"
 
     @field_validator("model")
     @classmethod
-    def validate_model(cls, v: Optional[str]) -> Optional[str]:
+    def validate_model(cls, v: str | None) -> str | None:
         allowed = {"gpt-4o", "gpt-4o-mini", "gpt-4-turbo", "gpt-3.5-turbo"}
         if v and v not in allowed:
             raise ValueError(f"Model must be one of: {', '.join(sorted(allowed))}")
@@ -55,13 +58,13 @@ class ConversationCreate(BaseModel):
 
 
 class ConversationUpdate(BaseModel):
-    title: Optional[str] = None
-    model: Optional[str] = None
-    document_ids: Optional[List[str]] = None
+    title: str | None = None
+    model: str | None = None
+    document_ids: list[str] | None = None
 
     @field_validator("title")
     @classmethod
-    def sanitize_title(cls, v: Optional[str]) -> Optional[str]:
+    def sanitize_title(cls, v: str | None) -> str | None:
         if v is None:
             return None
         v = v.strip()
@@ -70,7 +73,7 @@ class ConversationUpdate(BaseModel):
 
     @field_validator("model")
     @classmethod
-    def validate_model(cls, v: Optional[str]) -> Optional[str]:
+    def validate_model(cls, v: str | None) -> str | None:
         allowed = {"gpt-4o", "gpt-4o-mini", "gpt-4-turbo", "gpt-3.5-turbo"}
         if v and v not in allowed:
             raise ValueError(f"Model must be one of: {', '.join(sorted(allowed))}")
@@ -78,24 +81,24 @@ class ConversationUpdate(BaseModel):
 
     @field_validator("document_ids")
     @classmethod
-    def validate_doc_ids(cls, v: Optional[List[str]]) -> Optional[List[str]]:
+    def validate_doc_ids(cls, v: list[str] | None) -> list[str] | None:
         if v is None:
             return None
         if len(v) > 20:
             raise ValueError("Cannot attach more than 20 documents to a conversation.")
-        return list(set(v))   # déduplique
+        return list(set(v))  # déduplique
 
 
 class ConversationResponse(BaseModel):
     id: str
     title: str
     model: str
-    document_ids: List[str]
+    document_ids: list[str]
     total_tokens: int
     total_cost_usd: float
     created_at: datetime
     updated_at: datetime
-    message_count: Optional[int] = 0
+    message_count: int | None = 0
 
     class Config:
         from_attributes = True
@@ -103,30 +106,33 @@ class ConversationResponse(BaseModel):
 
 # ── Messages ────────────────────────────────────────────────────────────────
 
+
 class SourceChunk(BaseModel):
     doc_id: str
     doc_name: str
     chunk: str
     score: float
-    page: Optional[int] = None
+    page: int | None = None
+
 
 class MessageResponse(BaseModel):
     id: str
     conversation_id: str
     role: str
     content: str
-    sources: Optional[List[SourceChunk]]
-    tokens_used: Optional[int]
-    cost_usd: Optional[float]
-    model: Optional[str]
+    sources: list[SourceChunk] | None
+    tokens_used: int | None
+    cost_usd: float | None
+    model: str | None
     created_at: datetime
 
     class Config:
         from_attributes = True
 
+
 class AskRequest(BaseModel):
     question: str = Field(..., min_length=1, max_length=4000)
-    model: Optional[str] = None
+    model: str | None = None
 
     @field_validator("question")
     @classmethod
@@ -140,7 +146,7 @@ class AskRequest(BaseModel):
 
     @field_validator("model")
     @classmethod
-    def validate_model(cls, v: Optional[str]) -> Optional[str]:
+    def validate_model(cls, v: str | None) -> str | None:
         allowed = {"gpt-4o", "gpt-4o-mini", "gpt-4-turbo", "gpt-3.5-turbo"}
         if v and v not in allowed:
             raise ValueError(f"Model must be one of: {', '.join(sorted(allowed))}")
@@ -148,6 +154,7 @@ class AskRequest(BaseModel):
 
 
 # ── Available Models ─────────────────────────────────────────────────────────
+
 
 class ModelInfo(BaseModel):
     id: str
