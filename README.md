@@ -1,117 +1,166 @@
-# Theremia — Document Intelligence Platform
+# Theremia — Document Intelligence Platform (RAG)
 
-A production-ready fullstack RAG application: upload PDF documents and chat with them through an AI-powered conversational interface.
+Upload PDF documents and chat with them through a conversational interface grounded in your files.
 
-**Stack:** FastAPI · React · LangChain · ChromaDB · OpenAI · SQLite · Docker
+**Default 0€ mode:** Ollama (local LLM) + HuggingFace embeddings — no API key needed  
+**Stack:** FastAPI · React · LangChain · ChromaDB · SQLite · Docker (optional)
 
 ---
 
 ## Features
 
-### Core
-- **Document management** — Upload PDFs, track indexing status (processing → ready), view metadata (pages, chunks, size), delete with vector cleanup
-- **Conversational Q&A** — Chat interface with full message history, markdown rendering, loading states
-- **Multi-conversation** — Create, switch, rename, delete conversations; auto-titled from first question
-- **REST API** — Clean versioned API (`/api/v1/...`) with Pydantic validation and proper HTTP status codes
-
-### Bonus implemented
-- **Source citations** — Every AI answer shows the exact document chunks retrieved, with relevance score and page number
-- **Model selection** — Switch between GPT-4o, GPT-4o Mini, GPT-4 Turbo, GPT-3.5 Turbo per conversation
-- **Cost tracking** — Token usage and USD cost tracked per message and aggregated per conversation, displayed in real time
-- **Document scoping** — Each conversation can target a specific subset of documents
+- **Document management** — Upload PDFs, track indexing status (`processing → ready`), view metadata (pages, chunks, size), delete with vector cleanup
+- **Conversational Q&A** — Chat with your documents, full message history, markdown rendering
+- **Multi-conversation** — Create, rename, switch, delete conversations with per-conversation document scoping
+- **Source citations** — Every answer shows the exact chunks retrieved, with relevance score
+- **Provider switch** — LLM and embeddings providers are configurable: Ollama, OpenAI, OpenRouter, HuggingFace
+- **Cost tracking (OpenAI/OpenRouter)** — Token usage and USD cost tracked per message and aggregated per conversation
+- **JWT auth** — Stateless authentication, all data isolated per user
 
 ---
 
 ## Quick Start
 
-### Option 1 — Docker (recommended)
+### Option 1 — Local dev, 0€ mode (Ollama)
+
+**Prerequisites:** Python 3.12+, Node.js 20+, [Ollama](https://ollama.com) installed and running.
 
 ```bash
-# 1. Clone
-git clone https://github.com/YOUR_USERNAME/theremia-rag.git
+# Pull a local model (first run downloads the model)
+ollama pull llama3.1:8b
+
+git clone https://github.com/KMAit/theremia-rag.git
 cd theremia-rag
 
-# 2. Configure
-cp backend/.env.example backend/.env
-# Edit backend/.env and add your OpenAI API key:
-# OPENAI_API_KEY=sk-...
-
-# 3. Run
-docker compose up --build
-
-# App:  http://localhost:3000
-# API:  http://localhost:8000/docs
-```
-
-### Option 2 — Local development
-
-**Prerequisites:** Python 3.12+, Node.js 20+
-
-```bash
-# Setup everything at once
 make setup
+# Edit backend/.env (see "Environment Variables" below)
 
-# Edit backend/.env and add OPENAI_API_KEY=sk-...
-
-# Run backend + frontend in parallel
 make dev
-
 # Frontend: http://localhost:5173
 # Backend:  http://localhost:8000
 # API docs: http://localhost:8000/docs
 ```
 
-Or manually:
+### Option 2 — Local dev, OpenAI mode
+
+Same as above, but set in `backend/.env`:
+
+```env
+LLM_PROVIDER=openai
+OPENAI_API_KEY=sk-...
+EMBEDDINGS_PROVIDER=openai
+```
+
+### Option 3 — Docker
 
 ```bash
-# Backend
-cd backend
-cp .env.example .env    # then add your OPENAI_API_KEY
-pip install -r requirements.txt
-uvicorn app.main:app --reload
+# Fix Docker permissions if needed
+sudo usermod -aG docker $USER && newgrp docker
 
-# Frontend (separate terminal)
-cd frontend
-npm install
-npm run dev
+cp backend/.env.example backend/.env
+# Edit backend/.env
+
+docker compose up --build
+# App:      http://localhost:3000
+# API docs: http://localhost:8000/docs
 ```
 
 ---
 
 ## Environment Variables
 
-| Variable | Required | Default | Description |
-|---|---|---|---|
-| `OPENAI_API_KEY` | ✅ | — | Your OpenAI API key |
-| `DATABASE_URL` | No | `sqlite+aiosqlite:///./theremia.db` | Async SQLite URL |
-| `CHROMA_PERSIST_DIR` | No | `./chroma_db` | ChromaDB storage path |
-| `UPLOAD_DIR` | No | `./uploads` | PDF upload directory |
-| `DEFAULT_LLM_MODEL` | No | `gpt-4o-mini` | Default LLM model |
-| `ALLOWED_ORIGINS` | No | `["http://localhost:5173"]` | CORS origins |
-| `MAX_FILE_SIZE_MB` | No | `50` | Max upload size |
-| `CHUNK_SIZE` | No | `1000` | RAG chunk size in tokens |
-| `RETRIEVAL_K` | No | `5` | Top-K chunks retrieved |
-| `DEBUG` | No | `false` | SQLAlchemy echo |
+Copy `backend/.env.example` to `backend/.env` and edit as needed.
+
+### 0€ recommended config (Ollama + HuggingFace)
+
+```env
+LLM_PROVIDER=ollama
+OLLAMA_BASE_URL=http://localhost:11434
+OLLAMA_MODEL=llama3.1:8b
+
+EMBEDDINGS_PROVIDER=huggingface
+HF_EMBEDDING_MODEL=sentence-transformers/all-MiniLM-L6-v2
+
+JWT_SECRET_KEY=change_me_to_a_random_64_char_string
+ALLOWED_ORIGINS=["http://localhost:5173","http://localhost:3000"]
+```
+
+### OpenAI config
+
+```env
+LLM_PROVIDER=openai
+OPENAI_API_KEY=sk-...
+DEFAULT_LLM_MODEL=gpt-4o-mini
+
+EMBEDDINGS_PROVIDER=openai
+DEFAULT_EMBEDDING_MODEL=text-embedding-3-small
+
+JWT_SECRET_KEY=change_me_to_a_random_64_char_string
+```
+
+### OpenRouter config
+
+```env
+LLM_PROVIDER=openrouter
+OPENROUTER_API_KEY=sk-or-v1-...
+OPENROUTER_BASE_URL=https://openrouter.ai/api/v1
+DEFAULT_LLM_MODEL=gpt-4o-mini
+
+EMBEDDINGS_PROVIDER=huggingface
+HF_EMBEDDING_MODEL=sentence-transformers/all-MiniLM-L6-v2
+
+JWT_SECRET_KEY=change_me_to_a_random_64_char_string
+```
+
+### All variables
+
+| Variable                          | Default                                  | Description                                              |
+|-----------------------------------|------------------------------------------|----------------------------------------------------------|
+| `LLM_PROVIDER`                    | `ollama`                                 | `openai` · `openrouter` · `ollama`                       |
+| `EMBEDDINGS_PROVIDER`             | `openai`                                 | `openai` · `huggingface`                                 |
+| `OPENAI_API_KEY`                  | —                                        | Required if `LLM_PROVIDER=openai`                        |
+| `OPENROUTER_API_KEY`              | —                                        | Required if `LLM_PROVIDER=openrouter`                    |
+| `OPENROUTER_BASE_URL`             | `https://openrouter.ai/api/v1`           |                                                          |
+| `OLLAMA_BASE_URL`                 | `http://localhost:11434`                 |                                                          |
+| `OLLAMA_MODEL`                    | `llama3.1:8b`                            | Used when `LLM_PROVIDER=ollama`                          |
+| `DEFAULT_LLM_MODEL`               | `gpt-4o-mini`                            | Used when `LLM_PROVIDER=openai or openrouter`            |
+| `DEFAULT_EMBEDDING_MODEL`         | `text-embedding-3-small`                 | Used for OpenAI embeddings                               |
+| `HF_EMBEDDING_MODEL`              | `sentence-transformers/all-MiniLM-L6-v2` | Used for HuggingFace embeddings                          |
+| `JWT_SECRET_KEY`                  | ⚠️ change me                             | Generate: `openssl rand -hex 32`                         |
+| `JWT_ALGORITHM`                   | `HS256`                                  |                                                          |
+| `JWT_ACCESS_TOKEN_EXPIRE_MINUTES` | `60`                                     |                                                          |
+| `DATABASE_URL`                    | `sqlite+aiosqlite:///./theremia.db`      |                                                          |
+| `CHROMA_PERSIST_DIR`              | `./chroma_db`                            |                                                          |
+| `UPLOAD_DIR`                      | `./uploads`                              |                                                          |
+| `MAX_FILE_SIZE_MB`                | `50`                                     |                                                          |
+| `CHUNK_SIZE`                      | `1000`                                   | RAG chunk size in tokens                                 |
+| `CHUNK_OVERLAP`                   | `200`                                    |                                                          |
+| `RETRIEVAL_K`                     | `5`                                      | Top-K chunks retrieved per query                         |
+| `DEBUG`                           | `false`                                  | Enable dev features (e.g. /docs depending on app config) |
+| `ALLOWED_ORIGINS`                 | `["http://localhost:5173"]`              | CORS                                                     |
 
 ---
 
 ## API Reference
 
-Full interactive docs at `http://localhost:8000/docs` (Swagger UI).
+Full interactive docs at `http://localhost:8000/docs`.
 
 | Method | Endpoint | Description |
 |---|---|---|
-| `POST` | `/api/v1/documents` | Upload PDF (multipart) |
-| `GET` | `/api/v1/documents` | List all documents |
+| `POST` | `/api/v1/auth/register` | Create account |
+| `POST` | `/api/v1/auth/login` | Get JWT token |
+| `POST` | `/api/v1/documents/` | Upload PDF |
+| `GET` | `/api/v1/documents/` | List documents |
 | `GET` | `/api/v1/documents/{id}` | Get document details |
 | `DELETE` | `/api/v1/documents/{id}` | Delete document + vectors |
-| `POST` | `/api/v1/conversations` | Create conversation |
-| `GET` | `/api/v1/conversations` | List conversations |
-| `PATCH` | `/api/v1/conversations/{id}` | Update title/model/docs |
+| `POST` | `/api/v1/conversations/` | Create conversation |
+| `GET` | `/api/v1/conversations/` | List conversations |
+| `GET` | `/api/v1/conversations/{id}` | Get conversation |
+| `PATCH` | `/api/v1/conversations/{id}` | Update title / model / docs |
 | `DELETE` | `/api/v1/conversations/{id}` | Delete conversation |
 | `GET` | `/api/v1/conversations/{id}/messages` | Get message history |
-| `POST` | `/api/v1/conversations/{id}/messages` | Ask question (RAG) |
-| `GET` | `/api/v1/conversations/models` | Available LLM models |
+| `POST` | `/api/v1/conversations/{id}/messages` | Ask a question (RAG) |
+| `GET` | `/api/v1/conversations/models` | List available LLM models |
 | `GET` | `/api/v1/health` | Health check |
 
 ---
@@ -122,58 +171,91 @@ Full interactive docs at `http://localhost:8000/docs` (Swagger UI).
 theremia-rag/
 ├── backend/
 │   └── app/
-│       ├── main.py              # FastAPI app + lifespan
+│       ├── main.py
 │       ├── core/
+│       │   ├── auth.py          # JWT dependency
 │       │   ├── config.py        # Pydantic Settings
-│       │   └── database.py      # Async SQLAlchemy engine
+│       │   ├── database.py      # Async SQLAlchemy engine
+│       │   ├── exceptions.py
+│       │   └── security.py      # Security headers middleware
 │       ├── models/
-│       │   ├── document.py      # SQLAlchemy ORM
 │       │   ├── conversation.py  # ORM: Conversation + Message
-│       │   └── schemas.py       # Pydantic request/response
-│       ├── services/
-│       │   └── rag_service.py   # LangChain + ChromaDB logic
-│       └── api/routes/
-│           ├── documents.py
+│       │   ├── document.py      # ORM: Document
+│       │   ├── user.py          # ORM: User
+│       │   └── schemas.py       # Pydantic request/response schemas
+│       ├── repositories/        # Data access layer — no commits
+│       │   ├── conversation_repository.py
+│       │   ├── document_repository.py
+│       │   └── message_repository.py
+│       ├── services/            # Business logic — owns commit/rollback
+│       │   ├── auth_service.py
+│       │   ├── conversation_service.py
+│       │   ├── document_service.py
+│       │   ├── message_service.py
+│       │   └── rag_service.py   # LangChain + ChromaDB + provider selection
+│       └── api/routes/          # HTTP only — no DB queries, no ORM imports
+│           ├── auth.py
 │           ├── conversations.py
-│           ├── messages.py      # RAG query endpoint
+│           ├── documents.py
+│           ├── messages.py
 │           └── health.py
 │
 └── frontend/src/
     ├── components/
-    │   ├── layout/Sidebar.tsx   # Nav + conversation list
-    │   ├── chat/ChatPage.tsx    # Chat UI + sources
-    │   └── documents/DocumentsPage.tsx
-    ├── lib/
-    │   ├── api.ts               # Axios API client
-    │   └── utils.ts
+    │   ├── chat/ChatPage.tsx
+    │   ├── documents/DocumentsPage.tsx
+    │   └── layout/Sidebar.tsx
+    ├── lib/api.ts               # Axios API client
     ├── store/index.ts           # Zustand global state
-    └── types/index.ts           # TypeScript interfaces
+    └── types/index.ts
 ```
 
 ### Key design decisions
 
-**Backend:**
-- **Async throughout** — `asyncio`, `aiosqlite`, `aiofiles` for non-blocking I/O. Document ingestion runs as a FastAPI `BackgroundTask` so uploads return immediately.
-- **SQLite + ChromaDB** — Simple, zero-infra persistence. Production upgrade path: swap SQLite for Postgres, ChromaDB for Qdrant.
-- **RAG as a service** — `rag_service.py` is cleanly isolated. Swapping LangChain for LlamaIndex, or ChromaDB for another vector store, touches only this file.
-- **Per-conversation document scoping** — Collections are per-document, retrieved and merged at query time. Enables conversations to target specific document subsets.
-- **Cost tracking** — OpenAI token usage from `response_metadata` is captured per message and aggregated on the conversation.
-
-**Frontend:**
-- **TanStack Query** — Server state is managed via React Query (caching, background refetch, polling for `processing` docs).
-- **Zustand** — Minimal global state (active conversation, sidebar open). Avoids prop drilling without Redux overhead.
-- **Optimistic UX** — Upload progress via axios `onUploadProgress`. Processing documents auto-refetch every 2s until ready.
-- **Collapsible sidebar** — Stays out of the way on smaller screens.
+- **Layered architecture** — Routes (HTTP) → Services (business logic + transactions) → Repositories (data access). No SQLAlchemy in routes, no FastAPI in services.
+- **Single commit per endpoint** — Each service method owns exactly one `commit()`, with explicit `rollback()` on failure.
+- **N+1 prevention** — `list_conversations` uses 2 queries (conversations + GROUP BY message count) instead of N+1 per conversation.
+- **Background ingestion** — PDF upload returns immediately; vector indexing runs as a `BackgroundTask` and updates document status asynchronously.
+- **Provider abstraction** — Swapping LLM or embeddings provider touches only `rag_service.py` and `.env`. Routes and services are provider-agnostic.
 
 ---
 
 ## Makefile Commands
 
 ```bash
-make setup          # Install all dependencies
-make dev            # Run backend + frontend concurrently
-make up             # Start Docker stack
-make down           # Stop Docker stack
-make logs           # Tail Docker logs
-make clean          # Remove Docker volumes + local data
+make setup              # Create venv, copy .env if missing, install deps
+make dev                # Run backend + frontend in parallel
+make dev-backend        # Run FastAPI only
+make dev-frontend       # Run Vite only
+make migrate            # alembic upgrade head
+make revision m='msg'   # Create new alembic migration
+make db-current         # Show current migration revision
+make downgrade rev='-1' # Downgrade one revision
+make up                 # Start Docker stack (detached)
+make down               # Stop Docker stack
+make logs               # Tail Docker logs
+make clean              # Remove local db/chroma/uploads + Docker volumes
 ```
+
+---
+
+## Development
+
+```bash
+cd backend
+source .venv/bin/activate
+
+# Install all deps including dev tools
+pip install -r requirements.txt -r requirements-dev.txt
+
+# Lint + format
+ruff check . --fix && ruff format .
+
+# Type check
+mypy app/
+
+# Tests
+pytest
+```
+
+> **Note:** `make setup` installs `requirements.txt` only. For dev tools (ruff, mypy, pytest), run the pip command above or add `make install-dev` to your Makefile.
