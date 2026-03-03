@@ -11,6 +11,7 @@ class Conversation(Base):
     __tablename__ = "conversations"
 
     id = Column(String, primary_key=True, default=lambda: str(uuid.uuid4()))
+    user_id = Column(String, ForeignKey("users.id", ondelete="CASCADE"), nullable=False, index=True)
     title = Column(String, nullable=False, default="New conversation")
     model = Column(String, nullable=False, default="gpt-4o-mini")
     document_ids = Column(JSON, default=list)  # list of doc ids scoped to this convo
