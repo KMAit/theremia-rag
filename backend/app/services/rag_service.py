@@ -83,6 +83,7 @@ def get_available_models_for_current_provider() -> list[dict]:
 
     return AVAILABLE_MODELS
 
+
 def compute_cost(model: str, input_tokens: int, output_tokens: int) -> float:
     costs = MODEL_COSTS.get(model, MODEL_COSTS["gpt-4o-mini"])
     return (input_tokens / 1000 * costs["input"]) + (output_tokens / 1000 * costs["output"])
