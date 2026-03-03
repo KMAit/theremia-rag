@@ -1,122 +1,95 @@
+"""
+Conversation HTTP endpoints.
+
+This module defines the REST contract for conversation management.
+All business rules and persistence logic are delegated to the service layer.
+"""
+
+from __future__ import annotations
+
 import logging
 
 from fastapi import APIRouter, Depends
-from sqlalchemy import func, select
-from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.core.auth import get_current_user
 from app.core.database import get_db
-from app.core.exceptions import NotFoundError
-from app.models.conversation import Conversation, Message
 from app.models.schemas import ConversationCreate, ConversationResponse, ConversationUpdate
 from app.models.user import User
-from app.services.rag_service import AVAILABLE_MODELS
+from app.services import conversation_service
 
 router = APIRouter()
-logger = logging.getLogger("theremia.conversations")
-
-
-async def _get_owned_conversation(
-    convo_id: str,
-    current_user: User,
-    db: AsyncSession,
-) -> Conversation:
-    """Helper : charge une conversation et vérifie l'ownership. Lève 404 sinon."""
-    result = await db.execute(
-        select(Conversation).where(
-            Conversation.id == convo_id,
-            Conversation.user_id == current_user.id,
-        )
-    )
-    convo = result.scalar_one_or_none()
-    if not convo:
-        raise NotFoundError("Conversation")
-    return convo
-
-
-async def _message_count(convo_id: str, db: AsyncSession) -> int:
-    result = await db.execute(
-        select(func.count(Message.id)).where(Message.conversation_id == convo_id)
-    )
-    return result.scalar() or 0
+logger = logging.getLogger("theremia.routes.conversations")
 
 
 @router.get("/models")
 async def get_available_models():
-    return AVAILABLE_MODELS
+    return await conversation_service.get_available_models()
 
 
 @router.post("/", response_model=ConversationResponse, status_code=201)
 async def create_conversation(
     payload: ConversationCreate,
-    db: AsyncSession = Depends(get_db),
+    db=Depends(get_db),
     current_user: User = Depends(get_current_user),
 ):
-    convo = Conversation(
-        user_id=current_user.id,
-        title=payload.title or "New conversation",
-        model=payload.model or "gpt-4o-mini",
-        document_ids=payload.document_ids or [],
+    return await conversation_service.create_conversation(
+        db,
+        user_id=str(current_user.id),
+        title=payload.title,
+        model=payload.model,
+        document_ids=list(payload.document_ids or []),
     )
-    db.add(convo)
-    await db.commit()
-    await db.refresh(convo)
-    logger.info(f"User {current_user.id} created conversation {convo.id}")
-    return {**convo.__dict__, "message_count": 0}
 
 
 @router.get("/", response_model=list[ConversationResponse])
 async def list_conversations(
-    db: AsyncSession = Depends(get_db),
+    db=Depends(get_db),
     current_user: User = Depends(get_current_user),
 ):
-    result = await db.execute(
-        select(Conversation)
-        .where(Conversation.user_id == current_user.id)
-        .order_by(Conversation.updated_at.desc())
+    return await conversation_service.list_conversations(
+        db,
+        user_id=str(current_user.id),
     )
-    convos = result.scalars().all()
-    return [{**c.__dict__, "message_count": await _message_count(c.id, db)} for c in convos]
 
 
 @router.get("/{convo_id}", response_model=ConversationResponse)
 async def get_conversation(
     convo_id: str,
-    db: AsyncSession = Depends(get_db),
+    db=Depends(get_db),
     current_user: User = Depends(get_current_user),
 ):
-    convo = await _get_owned_conversation(convo_id, current_user, db)
-    return {**convo.__dict__, "message_count": await _message_count(convo_id, db)}
+    return await conversation_service.get_conversation(
+        db,
+        convo_id=convo_id,
+        user_id=str(current_user.id),
+    )
 
 
 @router.patch("/{convo_id}", response_model=ConversationResponse)
 async def update_conversation(
     convo_id: str,
     payload: ConversationUpdate,
-    db: AsyncSession = Depends(get_db),
+    db=Depends(get_db),
     current_user: User = Depends(get_current_user),
 ):
-    convo = await _get_owned_conversation(convo_id, current_user, db)
-
-    if payload.title is not None:
-        convo.title = payload.title
-    if payload.model is not None:
-        convo.model = payload.model
-    if payload.document_ids is not None:
-        convo.document_ids = payload.document_ids
-
-    await db.commit()
-    await db.refresh(convo)
-    return {**convo.__dict__, "message_count": await _message_count(convo_id, db)}
+    return await conversation_service.update_conversation(
+        db,
+        convo_id=convo_id,
+        user_id=str(current_user.id),
+        title=payload.title,
+        model=payload.model,
+        document_ids=list(payload.document_ids) if payload.document_ids is not None else None,
+    )
 
 
 @router.delete("/{convo_id}", status_code=204)
 async def delete_conversation(
     convo_id: str,
-    db: AsyncSession = Depends(get_db),
+    db=Depends(get_db),
     current_user: User = Depends(get_current_user),
 ):
-    convo = await _get_owned_conversation(convo_id, current_user, db)
-    await db.delete(convo)
-    await db.commit()
-    logger.info(f"User {current_user.id} deleted conversation {convo_id}")
+    await conversation_service.delete_conversation(
+        db,
+        convo_id=convo_id,
+        user_id=str(current_user.id),
+    )

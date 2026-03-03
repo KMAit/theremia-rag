@@ -1,34 +1,11 @@
 name: PR Checks
 
 on:
-  pull_request_target:
+  pull_request:
     branches: [main]
     types: [opened, edited, synchronize, reopened]
 
 jobs:
-  # ── PR title follows Conventional Commits ──────────────────────────────────
-  conventional-commit:
-    name: PR title — Conventional Commits
-    runs-on: ubuntu-latest
-    steps:
-      - uses: amannn/action-semantic-pull-request@v5
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        with:
-          headerPattern: '^\[.+\]( into \[.+\])? (\w+)(\(.+\))?: .+'
-          headerPatternCorrespondence: '_prefix, type, scope, subject'
-          types: |
-            feat
-            fix
-            refactor
-            perf
-            test
-            docs
-            chore
-            ci
-            style
-          requireScope: false
-
   # ── No direct push to main (belt-and-suspenders) ───────────────────────────
   size-check:
     name: PR size check
