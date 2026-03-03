@@ -1,3 +1,5 @@
+from __future__ import annotations
+
 from pydantic_settings import BaseSettings
 
 
@@ -18,11 +20,6 @@ class Settings(BaseSettings):
     # Vector store
     CHROMA_PERSIST_DIR: str = "./chroma_db"
 
-    # LLM / Embeddings
-    OPENAI_API_KEY: str = ""
-    DEFAULT_LLM_MODEL: str = "gpt-4o-mini"
-    DEFAULT_EMBEDDING_MODEL: str = "text-embedding-3-small"
-
     # Upload
     UPLOAD_DIR: str = "./uploads"
     MAX_FILE_SIZE_MB: int = 50
@@ -31,6 +28,29 @@ class Settings(BaseSettings):
     CHUNK_SIZE: int = 1000
     CHUNK_OVERLAP: int = 200
     RETRIEVAL_K: int = 5
+
+    # LLM / Embeddings providers
+    # Supported: "openai" | "openrouter" | "ollama"
+    LLM_PROVIDER: str = "ollama"
+
+    # Supported: "openai" | "huggingface"
+    EMBEDDINGS_PROVIDER: str = "huggingface"
+
+    # OpenAI
+    OPENAI_API_KEY: str | None = None
+    DEFAULT_LLM_MODEL: str = "gpt-4o-mini"
+    DEFAULT_EMBEDDING_MODEL: str = "text-embedding-3-small"
+
+    # OpenRouter
+    OPENROUTER_API_KEY: str | None = None
+    OPENROUTER_BASE_URL: str = "https://openrouter.ai/api/v1"
+
+    # Ollama
+    OLLAMA_BASE_URL: str = "http://localhost:11434"
+    OLLAMA_MODEL: str = "llama3.1:8b"
+
+    # HuggingFace embeddings
+    HF_EMBEDDING_MODEL: str = "sentence-transformers/all-MiniLM-L6-v2"
 
     # JWT
     JWT_SECRET_KEY: str = "change_this_to_a_random_64_char_string_in_production"

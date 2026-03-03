@@ -1,7 +1,24 @@
 import re
 from datetime import datetime
+from typing import Literal
 
 from pydantic import BaseModel, Field, field_validator
+
+from app.core.config import settings
+
+# ── Helpers ────────────────────────────────────────────────────────────────
+
+
+def _allowed_models() -> set[str]:
+    provider = (settings.LLM_PROVIDER or "openai").lower()
+
+    if provider == "ollama":
+        # En local, on accepte le modèle configuré dans l'env
+        return {settings.OLLAMA_MODEL}
+
+    # API contract public
+    return {"gpt-4o", "gpt-4o-mini", "gpt-4-turbo", "gpt-3.5-turbo"}
+
 
 # ── Documents ──────────────────────────────────────────────────────────────
 
@@ -36,24 +53,28 @@ class DocumentResponse(BaseModel):
 
 class ConversationCreate(BaseModel):
     title: str | None = "New conversation"
-    model: str | None = "gpt-4o-mini"
+    model: str | None = None
     document_ids: list[str] | None = []
 
     @field_validator("title")
     @classmethod
-    def sanitize_title(cls, v: str | None) -> str | None:
-        if v is None:
+    def sanitize_title(cls, v: str | None) -> str:
+        if not v:
             return "New conversation"
         v = v.strip()
-        v = re.sub(r"[\x00-\x1f\x7f]", "", v)  # retire les caractères de contrôle
+        v = re.sub(r"[\x00-\x1f\x7f]", "", v)
         return v[:200] or "New conversation"
 
     @field_validator("model")
     @classmethod
     def validate_model(cls, v: str | None) -> str | None:
-        allowed = {"gpt-4o", "gpt-4o-mini", "gpt-4-turbo", "gpt-3.5-turbo"}
-        if v and v not in allowed:
+        if v is None:
+            return v
+
+        allowed = _allowed_models()
+        if v not in allowed:
             raise ValueError(f"Model must be one of: {', '.join(sorted(allowed))}")
+
         return v
 
 
@@ -74,9 +95,13 @@ class ConversationUpdate(BaseModel):
     @field_validator("model")
     @classmethod
     def validate_model(cls, v: str | None) -> str | None:
-        allowed = {"gpt-4o", "gpt-4o-mini", "gpt-4-turbo", "gpt-3.5-turbo"}
-        if v and v not in allowed:
+        if v is None:
+            return None
+
+        allowed = _allowed_models()
+        if v not in allowed:
             raise ValueError(f"Model must be one of: {', '.join(sorted(allowed))}")
+
         return v
 
     @field_validator("document_ids")
@@ -86,7 +111,7 @@ class ConversationUpdate(BaseModel):
             return None
         if len(v) > 20:
             raise ValueError("Cannot attach more than 20 documents to a conversation.")
-        return list(set(v))  # déduplique
+        return list(set(v))
 
 
 class ConversationResponse(BaseModel):
@@ -138,7 +163,6 @@ class AskRequest(BaseModel):
     @classmethod
     def sanitize_question(cls, v: str) -> str:
         v = v.strip()
-        # Retire les caractères de contrôle sauf newlines/tabs (légitimes dans une question)
         v = re.sub(r"[\x00-\x08\x0b\x0c\x0e-\x1f\x7f]", "", v)
         if not v:
             raise ValueError("Question cannot be empty.")
@@ -147,9 +171,13 @@ class AskRequest(BaseModel):
     @field_validator("model")
     @classmethod
     def validate_model(cls, v: str | None) -> str | None:
-        allowed = {"gpt-4o", "gpt-4o-mini", "gpt-4-turbo", "gpt-3.5-turbo"}
-        if v and v not in allowed:
+        if v is None:
+            return None
+
+        allowed = _allowed_models()
+        if v not in allowed:
             raise ValueError(f"Model must be one of: {', '.join(sorted(allowed))}")
+
         return v
 
 
