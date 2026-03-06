@@ -23,7 +23,10 @@ export function formatTokens(n: number): string {
 }
 
 export function timeAgo(dateStr: string): string {
-  const diff = Date.now() - new Date(dateStr).getTime()
+  const normalized = dateStr.endsWith('Z') || dateStr.includes('+')
+      ? dateStr
+      : dateStr + 'Z';  // SQLite store in UTC without Z
+  const diff = Date.now() - new Date(normalized).getTime()
   const s = Math.floor(diff / 1000)
   if (s < 60) return 'just now'
   const m = Math.floor(s / 60)
