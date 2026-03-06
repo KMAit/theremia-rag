@@ -25,7 +25,11 @@ RUN rm -rf /etc/nginx/conf.d/*
 # Copy built assets
 COPY --from=builder /app/dist /usr/share/nginx/html
 
-# Custom secure nginx config
+# Copy entrypoint script
+COPY entrypoint.sh /entrypoint.sh
+RUN chmod +x /entrypoint.sh
+
+# Custom secure nginx config with placeholder for backend URL
 RUN cat > /etc/nginx/conf.d/default.conf << 'NGINXEOF'
 server {
     listen 80;
@@ -44,9 +48,9 @@ server {
     gzip_types text/plain text/css application/json application/javascript text/xml application/xml image/svg+xml;
     gzip_min_length 1000;
 
-    # Proxy API calls to backend
+    # Proxy API calls to backend — URL injected at startup via entrypoint.sh
     location /api/ {
-        proxy_pass http://backend:8000;
+        proxy_pass BACKEND_URL_PLACEHOLDER;
         proxy_set_header Host $host;
         proxy_set_header X-Real-IP $remote_addr;
         proxy_read_timeout 300s;
@@ -76,3 +80,6 @@ EXPOSE 80
 
 HEALTHCHECK --interval=15s --timeout=5s --start-period=10s --retries=3 \
     CMD wget -qO- http://localhost/ || exit 1
+
+# Entrypoint injects BACKEND_URL at startup
+ENTRYPOINT ["/entrypoint.sh"]
