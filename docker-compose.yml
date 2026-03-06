@@ -13,7 +13,7 @@ services:
       - backend_db:/app/data
     restart: unless-stopped
 
-    # Sécurité : limite les ressources
+    # Security: resource limits
     deploy:
       resources:
         limits:
@@ -21,10 +21,10 @@ services:
         reservations:
           memory: 512M
 
-    # Sécurité : capabilities minimales
+    # Security: minimal capabilities
     security_opt:
       - no-new-privileges:true
-    read_only: false   # false car on écrit en DB/uploads
+    read_only: false   # false: app writes to DB/uploads
 
     healthcheck:
       test: ["CMD", "curl", "-f", "http://localhost:8000/api/v1/health"]
@@ -50,7 +50,7 @@ services:
 
     security_opt:
       - no-new-privileges:true
-    read_only: true
+    # read_only: true  # disabled: nginx needs to write to tmpfs
     tmpfs:
       - /var/cache/nginx
       - /var/run
