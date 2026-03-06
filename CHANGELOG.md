@@ -17,9 +17,6 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Axios interceptors: Bearer token injection on every request, auto-redirect on 401
 - Toast notification system (`useToast`) replacing all `alert()` calls
 - Logout button in Sidebar (bottom, with hover red state)
-- Railway deployment config: `railway.toml` for backend and frontend
-- Nginx entrypoint with dynamic `BACKEND_URL` injection for Railway
-- Frontend `Dockerfile` unified for local Docker and Railway (single entrypoint)
 
 ### Changed
 - Docker set as recommended Quick Start option (Option 1)
