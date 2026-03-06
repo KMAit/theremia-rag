@@ -10,6 +10,7 @@ build/
 
 # Env
 .env
+.env.docker
 !.env.example
 
 # Database

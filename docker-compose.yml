@@ -1,27 +1,45 @@
-version: "3.9"
-
 services:
   backend:
     build:
       context: ./backend
+      target: runtime
     container_name: theremia-backend
-    env_file: ./backend/.env
+    env_file: ./backend/.env.docker
     ports:
       - "8000:8000"
     volumes:
       - backend_uploads:/app/uploads
       - backend_chroma:/app/chroma_db
-      - backend_db:/app
+      - backend_db:/app/data
     restart: unless-stopped
+
+    # Security: resource limits
+    deploy:
+      resources:
+        limits:
+          memory: 2G
+        reservations:
+          memory: 512M
+
+    # Security: minimal capabilities
+    security_opt:
+      - no-new-privileges:true
+    read_only: false   # false: app writes to DB/uploads
+
     healthcheck:
       test: ["CMD", "curl", "-f", "http://localhost:8000/api/v1/health"]
       interval: 15s
       timeout: 5s
+      start_period: 30s
       retries: 3
+
+    environment:
+      - PYTHONUNBUFFERED=1
 
   frontend:
     build:
       context: ./frontend
+      target: runtime
     container_name: theremia-frontend
     ports:
       - "3000:80"
@@ -30,7 +48,25 @@ services:
         condition: service_healthy
     restart: unless-stopped
 
+    security_opt:
+      - no-new-privileges:true
+    # read_only: true  # disabled: nginx needs to write to tmpfs
+    tmpfs:
+      - /var/cache/nginx
+      - /var/run
+      - /tmp
+
+    healthcheck:
+      test: ["CMD", "wget", "-qO-", "http://localhost/"]
+      interval: 15s
+      timeout: 5s
+      start_period: 10s
+      retries: 3
+
 volumes:
   backend_uploads:
+    driver: local
   backend_chroma:
+    driver: local
   backend_db:
+    driver: local

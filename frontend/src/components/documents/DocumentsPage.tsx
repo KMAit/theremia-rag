@@ -5,7 +5,8 @@ import { Upload, Trash2, FileText, AlertCircle, CheckCircle2, Clock, RefreshCw }
 import { documentsApi } from '@/lib/api'
 import { cn, formatBytes, timeAgo } from '@/lib/utils'
 import type { Document } from '@/types'
-
+import { useToast } from '@/hooks/useToast'
+import { Toaster } from '@/components/ui/Toaster'
 export function DocumentsPage() {
   const qc = useQueryClient()
   const [uploading, setUploading] = useState<{ name: string; progress: number } | null>(null)
@@ -19,9 +20,12 @@ export function DocumentsPage() {
     },
   })
 
+  const { toasts, addToast, removeToast } = useToast()
+
   const deleteMutation = useMutation({
     mutationFn: (id: string) => documentsApi.delete(id),
     onSuccess: () => qc.invalidateQueries({ queryKey: ['documents'] }),
+    onError: () => addToast('Failed to delete document. Please try again.'),
   })
 
   const onDrop = useCallback(async (accepted: File[]) => {
@@ -30,17 +34,22 @@ export function DocumentsPage() {
       try {
         await documentsApi.upload(file, (p) => setUploading({ name: file.name, progress: p }))
         qc.invalidateQueries({ queryKey: ['documents'] })
-      } catch (err) {
-        const msg = err instanceof Error ? err.message : 'Upload failed'
-        alert(msg)
+      } catch {
+        addToast('Upload failed. Please try again.')
       } finally {
         setUploading(null)
       }
     }
-  }, [qc])
+  }, [qc, addToast])
 
   const { getRootProps, getInputProps, isDragActive } = useDropzone({
     onDrop,
+    onDropRejected: (rejectedFiles) => {
+      const reason = rejectedFiles[0]?.errors[0]?.code
+      if (reason === 'file-invalid-type') addToast('Only PDF files are accepted')
+      else if (reason === 'file-too-large') addToast('File exceeds 50MB limit')
+      else addToast('File rejected')
+    },
     accept: { 'application/pdf': ['.pdf'] },
     maxSize: 50 * 1024 * 1024,
     multiple: true,
@@ -133,6 +142,7 @@ export function DocumentsPage() {
           </div>
         )}
       </div>
+      <Toaster toasts={toasts} onRemove={removeToast} />
     </div>
   )
 }

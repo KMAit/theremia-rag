@@ -1,6 +1,6 @@
 import { useState } from 'react'
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
-import { MessageSquare, FileText, Plus, Trash2, ChevronLeft, ChevronRight, BrainCircuit } from 'lucide-react'
+import { MessageSquare, FileText, Plus, Trash2, ChevronLeft, ChevronRight, BrainCircuit, LogOut } from 'lucide-react'
 import { conversationsApi } from '@/lib/api'
 import { useAppStore } from '@/store'
 import { cn, timeAgo } from '@/lib/utils'
@@ -128,6 +128,21 @@ export function Sidebar({ view, onViewChange }: SidebarProps) {
           </button>
         </div>
       )}
+
+      {/* Logout */}
+      <div className={cn('p-2 border-t border-surface-200 flex-shrink-0', !sidebarOpen && 'flex justify-center')}>
+        <button
+            onClick={() => useAppStore.getState().logout()}
+            className={cn(
+                'flex items-center gap-2.5 rounded-lg px-3 py-2 text-sm font-medium transition-colors w-full',
+                'text-ink-muted hover:bg-red-50 hover:text-red-600'
+            )}
+            title="Logout"
+        >
+          <LogOut size={16} className="flex-shrink-0" />
+          {sidebarOpen && <span>Logout</span>}
+        </button>
+      </div>
     </aside>
   )
 }

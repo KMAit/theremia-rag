@@ -36,7 +36,7 @@ def _serialize(convo, message_count: int = 0) -> dict:
 
 
 async def get_available_models() -> list[dict]:
-    return rag_service.get_available_models_for_provider()
+    return rag_service.get_available_models_for_current_provider()
 
 
 async def create_conversation(

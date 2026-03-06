@@ -7,6 +7,8 @@ import { conversationsApi, messagesApi, documentsApi } from '@/lib/api'
 import { useAppStore } from '@/store'
 import { cn, formatCost, formatTokens, timeAgo } from '@/lib/utils'
 import type { Message, SourceChunk } from '@/types'
+import { useToast } from '@/hooks/useToast'
+import { Toaster } from '@/components/ui/Toaster'
 
 export function ChatPage() {
   const qc = useQueryClient()
@@ -16,6 +18,7 @@ export function ChatPage() {
   const [showSettings, setShowSettings] = useState(false)
   const bottomRef = useRef<HTMLDivElement>(null)
   const textareaRef = useRef<HTMLTextAreaElement>(null)
+  const { toasts, addToast, removeToast } = useToast()
 
   const { data: conversation } = useQuery({
     queryKey: ['conversation', activeConversationId],
@@ -76,9 +79,8 @@ export function ChatPage() {
       qc.invalidateQueries({ queryKey: ['messages', activeConversationId] })
       qc.invalidateQueries({ queryKey: ['conversation', activeConversationId] })
       qc.invalidateQueries({ queryKey: ['conversations'] })
-    } catch (err) {
-      const msg = err instanceof Error ? err.message : 'Unknown error'
-      alert(msg)
+    } catch (_error) {
+      addToast('Something went wrong. Please try again.')
     } finally {
       setIsAsking(false)
     }
@@ -260,6 +262,7 @@ export function ChatPage() {
           Press Enter to send · Shift+Enter for new line
         </p>
       </div>
+      <Toaster toasts={toasts} onRemove={removeToast} />
     </div>
   )
 }
