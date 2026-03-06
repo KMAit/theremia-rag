@@ -34,7 +34,8 @@ cp backend/.env.example backend/.env.docker
 #   OPENAI_API_KEY=sk-...
 #   JWT_SECRET_KEY=$(openssl rand -hex 32)
 
-docker compose up --build
+make build
+make up
 ```
 
 - App: http://localhost:3000
@@ -257,6 +258,7 @@ make migrate            # alembic upgrade head
 make revision m='msg'   # Create new alembic migration
 make db-current         # Show current migration revision
 make downgrade rev='-1' # Downgrade one revision
+make build              # Build Docker images
 make up                 # Start Docker stack (detached)
 make down               # Stop Docker stack
 make logs               # Tail Docker logs
