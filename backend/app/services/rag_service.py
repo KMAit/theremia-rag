@@ -233,6 +233,7 @@ async def query_documents(
     Returns { answer, sources, tokens_used, cost_usd }.
     """
     model = model or settings.DEFAULT_LLM_MODEL
+    provider = (settings.LLM_PROVIDER or "openai").lower()
 
     if not collection_names:
         return {
@@ -240,6 +241,7 @@ async def query_documents(
             "sources": [],
             "tokens_used": 0,
             "cost_usd": 0.0,
+            "model": settings.OLLAMA_MODEL if provider == "ollama" else model,
         }
 
     all_docs_with_scores = []
@@ -264,7 +266,7 @@ async def query_documents(
 
     system_prompt = f"""You are a helpful document assistant for Theremia, a precision medicine company.
 Answer the user's question based ONLY on the provided document context.
-If the answer is not in the context, say so clearly.
+If the answer is partially in the context, use what's available and indicate it's partial.
 Be precise and cite which part of the documents supports your answer.
 
 Context from documents:
@@ -309,4 +311,5 @@ Previous conversation:
         "sources": sources,
         "tokens_used": total_tokens,
         "cost_usd": cost_usd,
+        "model": settings.OLLAMA_MODEL if provider == "ollama" else model,
     }

@@ -81,7 +81,7 @@ async def ask_question(
         sources=rag_result.get("sources", []),
         tokens_used=rag_result.get("tokens_used", 0),
         cost_usd=rag_result.get("cost_usd", 0.0),
-        model=model,
+        model=rag_result.get("model", model),
     )
 
     convo.total_tokens = (convo.total_tokens or 0) + int(rag_result.get("tokens_used") or 0)
