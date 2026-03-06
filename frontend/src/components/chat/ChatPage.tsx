@@ -79,7 +79,7 @@ export function ChatPage() {
       qc.invalidateQueries({ queryKey: ['messages', activeConversationId] })
       qc.invalidateQueries({ queryKey: ['conversation', activeConversationId] })
       qc.invalidateQueries({ queryKey: ['conversations'] })
-    } catch (_) {
+    } catch (_error) {
       addToast('Something went wrong. Please try again.')
     } finally {
       setIsAsking(false)
