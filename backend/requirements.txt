@@ -27,7 +27,7 @@ pymupdf==1.24.11
 
 # Local embeddings (CPU only — no CUDA)
 --extra-index-url https://download.pytorch.org/whl/cpu
-torch==2.1.0+cpu
+torch==2.2.2+cpu
 sentence-transformers==3.0.1
 
 # Pin httpx to avoid 'proxies' conflict with openai
