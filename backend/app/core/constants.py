@@ -1,5 +1,6 @@
 from enum import IntEnum, StrEnum
 
+
 class HttpStatus(IntEnum):
     BAD_REQUEST = 400
     UNAUTHORIZED = 401
@@ -8,6 +9,7 @@ class HttpStatus(IntEnum):
     CONFLICT = 409
     UNPROCESSABLE_CONTENT = 422
     SERVER_ERROR = 500
+
 
 class OpenAIModel(StrEnum):
     GPT4O = "gpt-4o"

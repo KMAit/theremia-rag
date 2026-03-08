@@ -62,10 +62,13 @@ class TokenResponse(BaseModel):
     token_type: str = "bearer"
     user: UserResponse
 
+
 # ── Helpers ───────────────────────────────────────────────────────────────────
+
 
 def _token_response(user: User, token: str) -> TokenResponse:
     return TokenResponse(access_token=token, user=UserResponse.model_validate(user))
+
 
 # ── Routes ─────────────────────────────────────────────────────────────────────
 

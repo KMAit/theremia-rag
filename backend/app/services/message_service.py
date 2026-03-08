@@ -4,7 +4,6 @@ Message service.
 Runs the RAG pipeline, then persists user and assistant messages in one commit.
 """
 
-
 import logging
 
 from sqlalchemy.ext.asyncio import AsyncSession

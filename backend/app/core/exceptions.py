@@ -22,6 +22,7 @@ def setup_logging():
     logging.getLogger("langchain").setLevel(logging.WARNING)
     logging.getLogger("sqlalchemy.engine").setLevel(logging.WARNING)
 
+
 logger = logging.getLogger("theremia")
 
 
@@ -31,7 +32,12 @@ logger = logging.getLogger("theremia")
 class AppError(Exception):
     """Base application error."""
 
-    def __init__(self, message: str, status_code: int = status.HTTP_400_BAD_REQUEST, detail: str | None = None):
+    def __init__(
+        self,
+        message: str,
+        status_code: int = status.HTTP_400_BAD_REQUEST,
+        detail: str | None = None,
+    ):
         self.message = message
         self.status_code = status_code
         self.detail = detail or message
@@ -68,8 +74,8 @@ def register_exception_handlers(app: FastAPI):
     @app.exception_handler(RequestValidationError)
     async def validation_error_handler(request: Request, exc: RequestValidationError):
         def _format_validation_error(e: dict) -> str:
-            msg = e['msg'].removeprefix('Value error, ')
-            fields = [str(loc) for loc in e['loc'] if loc not in ('body', 'query', 'path')]
+            msg = e["msg"].removeprefix("Value error, ")
+            fields = [str(loc) for loc in e["loc"] if loc not in ("body", "query", "path")]
             return f"{'.'.join(fields)}: {msg}" if fields else msg
 
         errors = exc.errors()

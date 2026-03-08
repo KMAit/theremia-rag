@@ -57,7 +57,7 @@ async def login_user(
     result = await db.execute(select(User).where(User.email == email.lower()))
     user = result.scalar_one_or_none()
 
-   # Intentionally vague message — do not reveal whether the email exists
+    # Intentionally vague message — do not reveal whether the email exists
     if not user or not verify_password(password, user.hashed_password):
         raise AuthError("Invalid email or password.")
 

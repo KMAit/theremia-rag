@@ -39,6 +39,7 @@ if settings.DEBUG:
             redoc_js_url="https://cdn.jsdelivr.net/npm/redoc@2.1.3/bundles/redoc.standalone.js",
         )
 
+
 register_exception_handlers(app)
 register_security_middleware(app)
 
