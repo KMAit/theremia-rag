@@ -15,7 +15,7 @@ from app.models import user, document, conversation  # noqa
 config = context.config
 
 # Injecter l'URL depuis les settings — priorité sur alembic.ini
-config.set_main_option("sqlalchemy.url", settings.DATABASE_URL)
+config.set_main_option("sqlalchemy.url", settings.async_database_url)
 
 if config.config_file_name is not None:
     fileConfig(config.config_file_name)
