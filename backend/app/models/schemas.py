@@ -3,21 +3,7 @@ from datetime import datetime
 
 from pydantic import BaseModel, Field, field_validator
 
-from app.core.config import settings
-
-# ── Helpers ────────────────────────────────────────────────────────────────
-
-
-def _allowed_models() -> set[str]:
-    provider = (settings.LLM_PROVIDER or "openai").lower()
-
-    if provider == "ollama":
-        # En local, on accepte le modèle configuré dans l'env
-        return {settings.OLLAMA_MODEL}
-
-    # API contract public
-    return {"gpt-4o", "gpt-4o-mini", "gpt-4-turbo", "gpt-3.5-turbo"}
-
+from app.services.rag_service import get_allowed_models
 
 # ── Documents ──────────────────────────────────────────────────────────────
 
@@ -70,7 +56,7 @@ class ConversationCreate(BaseModel):
         if v is None:
             return v
 
-        allowed = _allowed_models()
+        allowed = get_allowed_models()
         if v not in allowed:
             raise ValueError(f"Model must be one of: {', '.join(sorted(allowed))}")
 
@@ -97,7 +83,7 @@ class ConversationUpdate(BaseModel):
         if v is None:
             return None
 
-        allowed = _allowed_models()
+        allowed = get_allowed_models()
         if v not in allowed:
             raise ValueError(f"Model must be one of: {', '.join(sorted(allowed))}")
 
@@ -173,7 +159,7 @@ class AskRequest(BaseModel):
         if v is None:
             return None
 
-        allowed = _allowed_models()
+        allowed = get_allowed_models()
         if v not in allowed:
             raise ValueError(f"Model must be one of: {', '.join(sorted(allowed))}")
 

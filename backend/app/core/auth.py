@@ -1,6 +1,6 @@
 """
-Utilitaires JWT et dépendance FastAPI get_current_user.
-Importé par toutes les routes protégées.
+JWT utilities and FastAPI get_current_user dependency.
+Imported by all protected routes.
 """
 
 from datetime import UTC, datetime, timedelta
@@ -40,7 +40,7 @@ def create_access_token(user_id: str) -> str:
 
 
 def decode_token(token: str) -> str | None:
-    """Retourne le user_id ou None si token invalide."""
+    """Returns user_id or None if token is invalid or expired."""
     try:
         payload = jwt.decode(
             token,
@@ -60,8 +60,8 @@ async def get_current_user(
     db: AsyncSession = Depends(get_db),
 ) -> User:
     """
-    Dépendance injectée dans toutes les routes protégées.
-    Retourne l'utilisateur authentifié ou lève 401.
+    Dependency injected in all protected routes.
+    Returns the authenticated user or raises 401.
     """
     credentials_exception = HTTPException(
         status_code=status.HTTP_401_UNAUTHORIZED,
@@ -73,7 +73,7 @@ async def get_current_user(
     if not user_id:
         raise credentials_exception
 
-    result = await db.execute(select(User).where(User.id == user_id))
+    result = await db.execute(select(User).where(User.id == user_id, User.is_active == True))
     user = result.scalar_one_or_none()
     if not user:
         raise credentials_exception

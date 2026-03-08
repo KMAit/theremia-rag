@@ -1,6 +1,6 @@
 """
-Service d'authentification.
-Isolé des routes — ne connaît pas FastAPI Request/Response.
+Authentication service.
+Isolated from routes — does not know FastAPI Request/Response.
 """
 
 import logging
@@ -9,6 +9,7 @@ from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.core.auth import create_access_token, hash_password, verify_password
+from app.core.constants import HttpStatus
 from app.core.exceptions import AppError
 from app.models.user import User
 
@@ -17,12 +18,12 @@ logger = logging.getLogger("theremia.auth")
 
 class AuthError(AppError):
     def __init__(self, message: str):
-        super().__init__(message, status_code=401)
+        super().__init__(message, status_code=HttpStatus.UNAUTHORIZED)
 
 
 class ConflictError(AppError):
     def __init__(self, message: str):
-        super().__init__(message, status_code=409)
+        super().__init__(message, status_code=HttpStatus.CONFLICT)
 
 
 async def register_user(
@@ -31,9 +32,9 @@ async def register_user(
     password: str,
     full_name: str | None = None,
 ) -> User:
-    # Vérifier unicité email
-    result = await db.execute(select(User).where(User.email == email.lower()))
-    if result.scalar_one_or_none():
+    # Check email uniqueness
+    existing_user = await db.execute(select(User).where(User.email == email.lower()))
+    if existing_user.scalar_one_or_none():
         raise ConflictError("An account with this email already exists.")
 
     user = User(
@@ -56,7 +57,7 @@ async def login_user(
     result = await db.execute(select(User).where(User.email == email.lower()))
     user = result.scalar_one_or_none()
 
-    # Même message volontairement vague — ne pas révéler si l'email existe
+   # Intentionally vague message — do not reveal whether the email exists
     if not user or not verify_password(password, user.hashed_password):
         raise AuthError("Invalid email or password.")
 

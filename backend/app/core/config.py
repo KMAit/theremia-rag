@@ -1,5 +1,3 @@
-from __future__ import annotations
-
 from pydantic_settings import BaseSettings
 
 
@@ -31,10 +29,10 @@ class Settings(BaseSettings):
 
     # LLM / Embeddings providers
     # Supported: "openai" | "openrouter" | "ollama"
-    LLM_PROVIDER: str = "ollama"
+    LLM_PROVIDER: str = "openai"
 
     # Supported: "openai" | "huggingface"
-    EMBEDDINGS_PROVIDER: str = "huggingface"
+    EMBEDDINGS_PROVIDER: str = "openai"
 
     # OpenAI
     OPENAI_API_KEY: str | None = None

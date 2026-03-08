@@ -5,8 +5,6 @@ This module provides persistence primitives for the Document model.
 Transaction boundaries (commit/rollback/refresh) are handled by the service layer.
 """
 
-from __future__ import annotations
-
 import logging
 
 from sqlalchemy import select

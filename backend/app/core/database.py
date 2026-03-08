@@ -13,11 +13,12 @@ class Base(DeclarativeBase):
 
 async def init_db():
     """
-    Ne crée plus les tables directement.
-    Le schéma est géré par Alembic (alembic upgrade head).
-    Cette fonction reste pour d'éventuelles initialisations futures.
+    No longer creates tables directly.
+    Schema is managed by Alembic (alembic upgrade head).
+    Keeps model imports so SQLAlchemy registers them in Base.metadata —
+    required for tests that use Base.metadata.create_all().
     """
-    # Importer les modèles pour que SQLAlchemy les connaisse (utile pour les tests)
+    # Import models so SQLAlchemy registers them in Base.metadata
     from app.models import document, conversation, user  # noqa
 
 

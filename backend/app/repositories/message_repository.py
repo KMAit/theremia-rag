@@ -1,14 +1,8 @@
 """
-Message Repository — data access layer for Message model.
+Message repository — data access layer for Message.
 
-RULES ENFORCED HERE:
-- No commit(), rollback(), or refresh() — that's the service's job.
-- No business logic — only data access primitives.
-- No lazy-loaded relationships returned — all selects are explicit.
-- No RAG-specific formatting — the service owns that transformation.
+Transaction boundaries (commit/rollback/refresh) are owned by the service.
 """
-
-from __future__ import annotations
 
 import logging
 
@@ -24,10 +18,7 @@ async def list_by_conversation(
     db: AsyncSession,
     convo_id: str,
 ) -> list[Message]:
-    """
-    Return all messages for a conversation, ordered chronologically.
-    No relationship traversal — explicit SELECT only.
-    """
+    """Return all messages for a conversation, ordered chronologically."""
     result = await db.execute(
         select(Message).where(Message.conversation_id == convo_id).order_by(Message.created_at)
     )
@@ -39,13 +30,9 @@ async def get_history_rows(
     convo_id: str,
 ) -> list[tuple[str, str]]:
     """
-    Return (role, content) tuples for all messages in a conversation.
+    Return (role, content) tuples for a conversation.
 
-    WHY TUPLES AND NOT DICTS?
-    The repo returns raw DB data. It's the service's responsibility to
-    transform (role, content) into {"role": ..., "content": ...} for
-    the RAG pipeline. This way the repo has zero knowledge of RAG's
-    expected format — it only knows what's in the DB.
+    Raw DB data — the service transforms to dicts for the RAG pipeline.
     """
     result = await db.execute(
         select(Message.role, Message.content)
@@ -56,14 +43,7 @@ async def get_history_rows(
 
 
 def make_user_message(convo_id: str, content: str) -> Message:
-    """
-    Instantiate (but do not persist) a user Message ORM object.
-
-    WHY A FACTORY FUNCTION?
-    Centralises Message construction. If we add a new required field later
-    (e.g. ip_address for audit), we change it in one place.
-    The service calls db.add() — the repo never does.
-    """
+    """Instantiate a user Message — does not persist."""
     return Message(
         conversation_id=convo_id,
         role="user",
@@ -80,7 +60,7 @@ def make_assistant_message(
     cost_usd: float,
     model: str,
 ) -> Message:
-    """Instantiate (but do not persist) an assistant Message ORM object."""
+    """Instantiate an assistant Message — does not persist."""
     return Message(
         conversation_id=convo_id,
         role="assistant",

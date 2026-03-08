@@ -6,9 +6,18 @@ const api = axios.create({
   timeout: 300_000,
 })
 
+// ── Error message extractor ──────────────────────────────────────────────────
+const extractErrorMessage = (detail: unknown): string => {
+  if (Array.isArray(detail)) {
+    const first = detail[0]
+    return typeof first === 'string' ? first : first?.msg ?? 'Unexpected error'
+  }
+  return typeof detail === 'string' ? detail : 'Unexpected error'
+}
+
 // ── Inject Bearer token ──────────────────────────────────────────────────────
 api.interceptors.request.use((config) => {
-  // Lecture directe du localStorage pour éviter un import circulaire avec le store
+  // Read directly from localStorage to avoid circular import with store
   const raw = localStorage.getItem('theremia-store')
   if (raw) {
     try {
@@ -17,7 +26,7 @@ api.interceptors.request.use((config) => {
         config.headers.Authorization = `Bearer ${state.token}`
       }
     } catch {
-      // localStorage corrompu — on ignore
+      // Corrupted localStorage — ignore
     }
   }
   return config
@@ -27,13 +36,14 @@ api.interceptors.request.use((config) => {
 api.interceptors.response.use(
     (r) => r,
     (err) => {
-      if (err.response?.status === 401) {
+      if (err.response?.status === 401 && !err.config?.url?.includes('/auth/login')) {
         localStorage.removeItem('theremia-store')
         window.location.reload()
-        return new Promise(() => {}) // suspend la chaîne
+        return new Promise(() => {})
       }
-      const msg = err.response?.data?.detail || err.message || 'Unexpected error'
-      return Promise.reject(new Error(Array.isArray(msg) ? msg[0]?.msg : msg))
+
+      const msg = extractErrorMessage(err.response?.data?.detail) || err.message || 'Unexpected error'
+      return Promise.reject(new Error(msg))
     }
 )
 

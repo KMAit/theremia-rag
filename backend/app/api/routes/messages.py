@@ -5,8 +5,6 @@ Exposes conversation message retrieval and question submission.
 All orchestration and persistence logic lives in the service layer.
 """
 
-from __future__ import annotations
-
 import logging
 
 from fastapi import APIRouter, Depends

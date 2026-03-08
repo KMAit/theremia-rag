@@ -20,7 +20,7 @@ def setup_logging():
     logging.getLogger("httpx").setLevel(logging.WARNING)
     logging.getLogger("chromadb").setLevel(logging.WARNING)
     logging.getLogger("langchain").setLevel(logging.WARNING)
-
+    logging.getLogger("sqlalchemy.engine").setLevel(logging.WARNING)
 
 logger = logging.getLogger("theremia")
 
@@ -31,7 +31,7 @@ logger = logging.getLogger("theremia")
 class AppError(Exception):
     """Base application error."""
 
-    def __init__(self, message: str, status_code: int = 400, detail: str | None = None):
+    def __init__(self, message: str, status_code: int = status.HTTP_400_BAD_REQUEST, detail: str | None = None):
         self.message = message
         self.status_code = status_code
         self.detail = detail or message
@@ -40,17 +40,17 @@ class AppError(Exception):
 
 class NotFoundError(AppError):
     def __init__(self, resource: str = "Resource"):
-        super().__init__(f"{resource} not found", status_code=404)
+        super().__init__(f"{resource} not found", status_code=status.HTTP_404_NOT_FOUND)
 
 
 class ValidationError(AppError):
     def __init__(self, message: str):
-        super().__init__(message, status_code=422)
+        super().__init__(message, status_code=status.HTTP_422_UNPROCESSABLE_ENTITY)
 
 
 class RAGError(AppError):
     def __init__(self, message: str):
-        super().__init__(message, status_code=500, detail=message)
+        super().__init__(message, status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail=message)
 
 
 # ── Exception handlers ────────────────────────────────────────────────────────
@@ -67,8 +67,13 @@ def register_exception_handlers(app: FastAPI):
 
     @app.exception_handler(RequestValidationError)
     async def validation_error_handler(request: Request, exc: RequestValidationError):
+        def _format_validation_error(e: dict) -> str:
+            msg = e['msg'].removeprefix('Value error, ')
+            fields = [str(loc) for loc in e['loc'] if loc not in ('body', 'query', 'path')]
+            return f"{'.'.join(fields)}: {msg}" if fields else msg
+
         errors = exc.errors()
-        messages = [f"{' → '.join(str(loc) for loc in e['loc'])}: {e['msg']}" for e in errors]
+        messages = [_format_validation_error(e) for e in errors]
         logger.warning(f"Validation error on {request.url.path}: {messages}")
         return JSONResponse(
             status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,

@@ -5,7 +5,6 @@ The RAG pipeline is intentionally treated as a black box for this exercise.
 This module focuses on clean integration and predictable IO contracts.
 """
 
-from __future__ import annotations
 
 import logging
 from typing import Any
@@ -16,6 +15,8 @@ from langchain_community.document_loaders import PyMuPDFLoader
 from langchain_community.vectorstores import Chroma
 
 from app.core.config import settings
+
+from app.core.constants import OpenAIModel
 
 logger = logging.getLogger("theremia.rag")
 
@@ -88,6 +89,12 @@ def compute_cost(model: str, input_tokens: int, output_tokens: int) -> float:
     costs = MODEL_COSTS.get(model, MODEL_COSTS["gpt-4o-mini"])
     return (input_tokens / 1000 * costs["input"]) + (output_tokens / 1000 * costs["output"])
 
+
+def get_allowed_models() -> set[str]:
+    provider = (settings.LLM_PROVIDER or "openai").lower()
+    if provider == "ollama":
+        return {settings.OLLAMA_MODEL}
+    return {m.value for m in OpenAIModel}
 
 def _resolve_provider_model_id(public_model_id: str) -> str:
     """
