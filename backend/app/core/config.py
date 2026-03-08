@@ -66,4 +66,5 @@ class Settings(BaseSettings):
             return self.DATABASE_URL.replace("postgresql://", "postgresql+asyncpg://")
         return self.DATABASE_URL
 
+
 settings = Settings()
