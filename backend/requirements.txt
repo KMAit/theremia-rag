@@ -4,6 +4,7 @@ pydantic==2.9.2
 pydantic-settings==2.5.2
 sqlalchemy==2.0.35
 aiosqlite==0.20.0
+asyncpg==0.29.0
 aiofiles==24.1.0
 python-multipart==0.0.12
 
@@ -24,7 +25,9 @@ chromadb==0.5.11
 openai==1.57.0
 pymupdf==1.24.11
 
-# Local embeddings (free)
+# Local embeddings (CPU only — no CUDA)
+--extra-index-url https://download.pytorch.org/whl/cpu
+torch==2.1.0+cpu
 sentence-transformers==3.0.1
 
 # Pin httpx to avoid 'proxies' conflict with openai
