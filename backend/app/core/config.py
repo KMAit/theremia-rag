@@ -59,5 +59,12 @@ class Settings(BaseSettings):
         env_file = ".env"
         extra = "ignore"
 
+    @property
+    def async_database_url(self) -> str:
+        """Convert postgresql:// to postgresql+asyncpg:// for SQLAlchemy async."""
+        if self.DATABASE_URL.startswith("postgresql://"):
+            return self.DATABASE_URL.replace("postgresql://", "postgresql+asyncpg://")
+        return self.DATABASE_URL
+
 
 settings = Settings()
