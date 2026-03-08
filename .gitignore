@@ -52,8 +52,5 @@ frontend/.vite/
 .DS_Store
 Thumbs.db
 
-# Docker
-.dockerignore
-
 # Logs
 *.log

@@ -1,0 +1,11 @@
+.venv
+__pycache__
+*.pyc
+*.pyo
+.env
+.env.*
+theremia.db
+chroma_db/
+uploads/
+.pytest_cache
+.ruff_cache
