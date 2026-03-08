@@ -14,12 +14,8 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
 # Copy requirements first to leverage Docker layer cache
 COPY requirements.txt .
 
-# BuildKit cache mount: pip cache persists across builds even if requirements.txt changes
-# First build: slow (downloads everything). Subsequent builds: fast (cache hit).
-RUN --mount=type=cache,target=/root/.cache/pip \
-    pip install --upgrade pip \
-    && pip install --prefix=/install -r requirements.txt
-
+RUN pip install --upgrade pip \
+    && pip install --prefix=/install -r requirements.txt \
 
 # ── Stage 2: Runtime ──────────────────────────────────────────────────────────
 FROM python:3.12-slim AS runtime
