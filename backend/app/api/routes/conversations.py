@@ -5,8 +5,6 @@ This module defines the REST contract for conversation management.
 All business rules and persistence logic are delegated to the service layer.
 """
 
-from __future__ import annotations
-
 import logging
 
 from fastapi import APIRouter, Depends

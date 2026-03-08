@@ -24,8 +24,21 @@ app = FastAPI(
     version="1.0.0",
     lifespan=lifespan,
     docs_url="/docs" if settings.DEBUG else None,
-    redoc_url="/redoc" if settings.DEBUG else None,
+    redoc_url=None,
 )
+
+if settings.DEBUG:
+    from fastapi.openapi.docs import get_redoc_html
+    from fastapi.responses import HTMLResponse
+
+    @app.get("/redoc", include_in_schema=False)
+    async def redoc_html() -> HTMLResponse:
+        return get_redoc_html(
+            openapi_url="/openapi.json",
+            title="Theremia API",
+            redoc_js_url="https://cdn.jsdelivr.net/npm/redoc@2.1.3/bundles/redoc.standalone.js",
+        )
+
 
 register_exception_handlers(app)
 register_security_middleware(app)

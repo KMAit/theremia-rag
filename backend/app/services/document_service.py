@@ -5,8 +5,6 @@ Validates and stores uploaded PDFs, persists DB metadata, and runs ingestion
 in a background task using a dedicated DB session.
 """
 
-from __future__ import annotations
-
 import logging
 import os
 import re

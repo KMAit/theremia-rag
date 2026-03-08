@@ -6,11 +6,9 @@ operations to the service layer.
 Background ingestion is scheduled from here.
 """
 
-from __future__ import annotations
-
 import logging
 
-from fastapi import APIRouter, BackgroundTasks, Depends, File, UploadFile
+from fastapi import APIRouter, BackgroundTasks, Depends, File, UploadFile, status
 
 from app.core.auth import get_current_user
 from app.core.database import get_db
@@ -29,6 +27,11 @@ async def upload_document(
     db=Depends(get_db),
     current_user: User = Depends(get_current_user),
 ):
+    """
+    Accepts a PDF upload, persists metadata, and schedules background ingestion.
+    Returns 201 immediately — document becomes queryable once status reaches 'ready'.
+    """
+
     # Read bytes here — UploadFile is a FastAPI/HTTP concept,
     # not something the service should depend on.
     content = await file.read()
@@ -69,7 +72,7 @@ async def get_document(
     return await document_service.get_document(db, doc_id=doc_id, user_id=str(current_user.id))
 
 
-@router.delete("/{doc_id}", status_code=204)
+@router.delete("/{doc_id}", status_code=status.HTTP_204_NO_CONTENT)
 async def delete_document(
     doc_id: str,
     db=Depends(get_db),

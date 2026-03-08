@@ -63,6 +63,13 @@ class TokenResponse(BaseModel):
     user: UserResponse
 
 
+# ── Helpers ───────────────────────────────────────────────────────────────────
+
+
+def _token_response(user: User, token: str) -> TokenResponse:
+    return TokenResponse(access_token=token, user=UserResponse.model_validate(user))
+
+
 # ── Routes ─────────────────────────────────────────────────────────────────────
 
 
@@ -73,7 +80,7 @@ async def register(
 ):
     user = await register_user(db, payload.email, payload.password, payload.full_name)
     token = create_access_token(user.id)
-    return TokenResponse(access_token=token, user=UserResponse.model_validate(user))
+    return _token_response(user, token)
 
 
 @router.post("/login", response_model=TokenResponse)
@@ -81,12 +88,12 @@ async def login(
     form: OAuth2PasswordRequestForm = Depends(),
     db: AsyncSession = Depends(get_db),
 ):
-    """Compatible OAuth2 — username = email."""
+    """Compatible OAuth2 — username field maps to email."""
     user, token = await login_user(db, form.username, form.password)
-    return TokenResponse(access_token=token, user=UserResponse.model_validate(user))
+    return _token_response(user, token)
 
 
 @router.get("/me", response_model=UserResponse)
 async def me(current_user: User = Depends(get_current_user)):
-    """Retourne l'utilisateur authentifié courant."""
+    """Returns the currently authenticated user."""
     return current_user
