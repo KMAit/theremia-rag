@@ -51,7 +51,7 @@ server {
     # Proxy API calls to backend — URL injected at startup via entrypoint.sh
     location /api/ {
         proxy_pass BACKEND_URL_PLACEHOLDER;
-        proxy_set_header Host $host;
+        proxy_set_header Host HOST_PLACEHOLDER;
         proxy_set_header X-Real-IP $remote_addr;
         proxy_read_timeout 300s;
         proxy_connect_timeout 10s;
