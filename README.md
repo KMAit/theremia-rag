@@ -2,8 +2,20 @@
 
 Upload PDF documents and chat with them through a conversational interface grounded in your files.
 
-**Default mode:** OpenAI GPT-4o-mini + HuggingFace embeddings
-**Stack:** FastAPI · React · LangChain · ChromaDB · SQLite · Docker
+**Default mode:** OpenAI GPT-4o-mini + HuggingFace embeddings  
+**Stack:** FastAPI · React · LangChain · ChromaDB · SQLite / PostgreSQL · Docker
+
+---
+
+## Live Demo
+
+| | URL |
+|---|---|
+| **App** | https://endearing-contentment-production-483f.up.railway.app |
+| **API** | https://theremia-rag-production.up.railway.app |
+| **Health** | https://theremia-rag-production.up.railway.app/api/v1/health |
+
+> Deployed on Railway — FastAPI backend + React frontend + PostgreSQL
 
 ---
 
@@ -24,7 +36,6 @@ Upload PDF documents and chat with them through a conversational interface groun
 ### Option 1 — Docker (recommended)
 
 **Prerequisites:** [Docker Desktop](https://www.docker.com/products/docker-desktop/) — nothing else needed.
-
 ```bash
 git clone https://github.com/KMAit/theremia-rag.git
 cd theremia-rag
@@ -52,7 +63,6 @@ make up
 ### Option 2 — Local dev, OpenAI mode
 
 **Prerequisites:** Python 3.12+, Node.js 20+
-
 ```bash
 git clone https://github.com/KMAit/theremia-rag.git
 cd theremia-rag
@@ -75,7 +85,6 @@ make dev
 ### Option 3 — Local dev, free mode (Ollama)
 
 **Prerequisites:** Python 3.12+, Node.js 20+, [Ollama](https://ollama.com) installed and running.
-
 ```bash
 ollama pull llama3.1:8b
 
@@ -95,7 +104,6 @@ make dev
 Copy `backend/.env.example` to `backend/.env` (local) or `backend/.env.docker` (Docker) and edit as needed.
 
 ### Docker / OpenAI config (recommended)
-
 ```env
 LLM_PROVIDER=openai
 OPENAI_API_KEY=sk-...
@@ -108,8 +116,7 @@ JWT_SECRET_KEY=change_me_to_a_random_64_char_string
 ALLOWED_ORIGINS=["http://localhost:3000"]
 ```
 
-### free config (Ollama + HuggingFace)
-
+### Free config (Ollama + HuggingFace)
 ```env
 LLM_PROVIDER=ollama
 OLLAMA_BASE_URL=http://localhost:11434
@@ -123,7 +130,6 @@ ALLOWED_ORIGINS=["http://localhost:5173","http://localhost:3000"]
 ```
 
 ### OpenRouter config
-
 ```env
 LLM_PROVIDER=openrouter
 OPENROUTER_API_KEY=sk-or-v1-...
@@ -138,36 +144,36 @@ JWT_SECRET_KEY=change_me_to_a_random_64_char_string
 
 ### All variables
 
-| Variable | Default                                  | Description |
-|---|------------------------------------------|---|
-| `LLM_PROVIDER` | `openai`                                 | `openai` · `openrouter` · `ollama` |
-| `EMBEDDINGS_PROVIDER` | `huggingface`                                 | `openai` · `huggingface` |
-| `OPENAI_API_KEY` | —                                        | Required if `LLM_PROVIDER=openai` |
-| `OPENROUTER_API_KEY` | —                                        | Required if `LLM_PROVIDER=openrouter` |
-| `OPENROUTER_BASE_URL` | `https://openrouter.ai/api/v1`           | |
-| `OLLAMA_BASE_URL` | `http://localhost:11434`                 | |
-| `OLLAMA_MODEL` | `llama3.1:8b`                            | Used when `LLM_PROVIDER=ollama` |
-| `DEFAULT_LLM_MODEL` | `gpt-4o-mini`                            | Used when `LLM_PROVIDER=openai` or `openrouter` |
-| `DEFAULT_EMBEDDING_MODEL` | `text-embedding-3-small`                 | Used for OpenAI embeddings |
+| Variable | Default | Description |
+|---|---|---|
+| `LLM_PROVIDER` | `openai` | `openai` · `openrouter` · `ollama` |
+| `EMBEDDINGS_PROVIDER` | `huggingface` | `openai` · `huggingface` |
+| `OPENAI_API_KEY` | — | Required if `LLM_PROVIDER=openai` |
+| `OPENROUTER_API_KEY` | — | Required if `LLM_PROVIDER=openrouter` |
+| `OPENROUTER_BASE_URL` | `https://openrouter.ai/api/v1` | |
+| `OLLAMA_BASE_URL` | `http://localhost:11434` | |
+| `OLLAMA_MODEL` | `llama3.1:8b` | Used when `LLM_PROVIDER=ollama` |
+| `DEFAULT_LLM_MODEL` | `gpt-4o-mini` | Used when `LLM_PROVIDER=openai` or `openrouter` |
+| `DEFAULT_EMBEDDING_MODEL` | `text-embedding-3-small` | Used for OpenAI embeddings |
 | `HF_EMBEDDING_MODEL` | `sentence-transformers/all-MiniLM-L6-v2` | Used for HuggingFace embeddings |
-| `JWT_SECRET_KEY` | ⚠️ change me                             | Generate: `openssl rand -hex 32` |
-| `JWT_ALGORITHM` | `HS256`                                  | |
-| `JWT_ACCESS_TOKEN_EXPIRE_MINUTES` | `60`                                     | |
-| `DATABASE_URL` | `sqlite+aiosqlite:///./theremia.db`      | |
-| `CHROMA_PERSIST_DIR` | `./chroma_db`                            | |
-| `UPLOAD_DIR` | `./uploads`                              | |
-| `MAX_FILE_SIZE_MB` | `50`                                     | |
-| `CHUNK_SIZE` | `1000`                                   | RAG chunk size in tokens |
-| `CHUNK_OVERLAP` | `200`                                    | |
-| `RETRIEVAL_K` | `5`                                      | Top-K chunks retrieved per query |
-| `DEBUG` | `false`                                  | Enable dev features |
-| `ALLOWED_ORIGINS` | `["http://localhost:5173"]`              | CORS |
+| `JWT_SECRET_KEY` | ⚠️ change me | Generate: `openssl rand -hex 32` |
+| `JWT_ALGORITHM` | `HS256` | |
+| `JWT_ACCESS_TOKEN_EXPIRE_MINUTES` | `60` | |
+| `DATABASE_URL` | `sqlite+aiosqlite:///./theremia.db` | |
+| `CHROMA_PERSIST_DIR` | `./chroma_db` | |
+| `UPLOAD_DIR` | `./uploads` | |
+| `MAX_FILE_SIZE_MB` | `50` | |
+| `CHUNK_SIZE` | `1000` | RAG chunk size in tokens |
+| `CHUNK_OVERLAP` | `200` | |
+| `RETRIEVAL_K` | `5` | Top-K chunks retrieved per query |
+| `DEBUG` | `false` | Enable dev features and `/docs` |
+| `ALLOWED_ORIGINS` | `["http://localhost:5173"]` | CORS |
 
 ---
 
 ## API Reference
 
-Full interactive docs at `http://localhost:8000/docs`.
+Full interactive docs at `http://localhost:8000/docs` (requires `DEBUG=true`).
 
 | Method | Endpoint | Description |
 |---|---|---|
@@ -190,7 +196,6 @@ Full interactive docs at `http://localhost:8000/docs`.
 ---
 
 ## Architecture
-
 ```
 theremia-rag/
 ├── backend/
@@ -248,7 +253,6 @@ theremia-rag/
 ---
 
 ## Makefile Commands
-
 ```bash
 make setup              # Create venv, copy .env if missing, install deps
 make dev                # Run backend + frontend in parallel
@@ -268,6 +272,7 @@ make clean              # Remove local db/chroma/uploads + Docker volumes
 ---
 
 ## Trade-offs
+
 For the scope of this technical test:
 - SQLite locally, PostgreSQL in production (Railway) — no migration tooling needed for dev
 - Background tasks use FastAPI BackgroundTasks instead of a full worker queue (Celery/RQ)
