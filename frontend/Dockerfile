@@ -1,3 +1,4 @@
+# Build v2 - HOST_PLACEHOLDER fix
 # ── Stage 1: Builder ──────────────────────────────────────────────────────────
 FROM node:20-alpine AS builder
 
@@ -47,16 +48,6 @@ server {
     gzip on;
     gzip_types text/plain text/css application/json application/javascript text/xml application/xml image/svg+xml;
     gzip_min_length 1000;
-
-    # Proxy API calls to backend — URL injected at startup via entrypoint.sh
-    location /api/ {
-        proxy_pass BACKEND_URL_PLACEHOLDER;
-        proxy_set_header Host HOST_PLACEHOLDER;
-        proxy_set_header X-Real-IP $remote_addr;
-        proxy_read_timeout 300s;
-        proxy_connect_timeout 10s;
-        proxy_send_timeout 300s;
-    }
 
     # SPA fallback — all routes return index.html
     location / {
