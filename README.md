@@ -264,3 +264,12 @@ make down               # Stop Docker stack
 make logs               # Tail Docker logs
 make clean              # Remove local db/chroma/uploads + Docker volumes
 ```
+
+---
+
+## Trade-offs
+For the scope of this technical test:
+- SQLite locally, PostgreSQL in production (Railway) — no migration tooling needed for dev
+- Background tasks use FastAPI BackgroundTasks instead of a full worker queue (Celery/RQ)
+- Authentication is JWT-based without refresh tokens
+- ChromaDB is embedded instead of running as a separate service
