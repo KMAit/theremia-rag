@@ -12,6 +12,10 @@ RUN npm ci --ignore-scripts
 # Copy source code
 COPY . .
 
+# Inject build-time env vars
+ARG VITE_API_URL
+ENV VITE_API_URL=$VITE_API_URL
+
 # Production build
 RUN npm run build
 
